@@ -22,10 +22,15 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/JamesBalazs/lode/internal/lode"
 	"github.com/spf13/cobra"
+	"net/http"
+	"time"
 )
+
+var method string
+var freq int
+var delay, timeout time.Duration
 
 // testCmd represents the test command
 var testCmd = &cobra.Command{
@@ -33,17 +38,24 @@ var testCmd = &cobra.Command{
 	Short: "Run a single load test",
 	Long: `Run a load test against a single URL
 
-Supports either --delay or --freq for timing.`,
+Supports either --delay or --freq for timing.
+e.g. lode test https://example.com`,
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("test called")
+		if freq != 0 {
+			delay = time.Second / time.Duration(freq)
+		}
+		client := &http.Client{Timeout: timeout}
+		lode := lode.NewLode(args[0], method, delay, client)
+		lode.Run()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(testCmd)
 
-	testCmd.Flags().StringP("url", "u", "", "Target URL")
-	testCmd.Flags().StringP("delay", "d", "", "Milliseconds to wait between requests")
-	testCmd.Flags().StringP("freq", "f", "", "Number of requests to make per second")
-	testCmd.Flags().StringP("method", "m", "", "HTTP method to use")
+	testCmd.Flags().IntVarP(&freq, "freq", "f", 0, "Number of requests to make per second")
+	testCmd.Flags().DurationVarP(&delay, "delay", "d", 1 * time.Second, "Time to wait between requests, e.g. 200ms or 1s - defaults to 1s unless --freq specified")
+	testCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5 * time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
+	testCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP method to use - defaults to GET")
 }
