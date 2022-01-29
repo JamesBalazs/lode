@@ -16,17 +16,17 @@ const method = "GET"
 const delay = time.Second
 var client = &mocks.Client{}
 
-func TestNewLodeReturnsLode(t *testing.T) {
+func TestNewReturnsLode(t *testing.T) {
 	assert := assert.New(t)
 	expectedRequest, _ := http.NewRequest(method, url, nil)
-	expectedLode := &Lode{url, method, delay, client, expectedRequest}
+	expectedLode := &Lode{delay, client, expectedRequest, 1, 0}
 
-	lode := NewLode(url, method, delay, client)
+	lode := New(url, method, delay, client, 1, 0)
 
 	assert.Equal(expectedLode, lode)
 }
 
-func TestNewLodeErrorCreatingRequest(t *testing.T) {
+func TestNewErrorCreatingRequest(t *testing.T) {
 	assert := assert.New(t)
 	logMock := new(mocks.Log)
 	logMock.On("Panicf", "Error creating request: %s", "could not create request")
@@ -35,19 +35,19 @@ func TestNewLodeErrorCreatingRequest(t *testing.T) {
 		return nil, errors.New("could not create request")
 	}
 
-	lode := NewLode(url, method, delay, client)
+	lode := New(url, method, delay, client, 1, 0)
 
 	assert.Nil(lode)
 	logMock.AssertExpectations(t)
 	NewRequest = http.NewRequest
 }
 
-func TestLodeRunDoesRequest(t *testing.T) {
+func TestRunDoesRequest(t *testing.T) {
 	clientMock := new(mocks.Client)
-	response := http.Response{}
+	response := &http.Response{}
 	clientMock.On("Do", mock.Anything).Return(response, nil)
 
-	lode := NewLode(url, method, delay, clientMock)
+	lode := New(url, method, delay, clientMock, 1, 0)
 	lode.Run()
 
 	clientMock.AssertExpectations(t)

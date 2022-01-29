@@ -29,24 +29,24 @@ import (
 )
 
 var method string
-var freq int
-var delay, timeout time.Duration
+var freq, concurrency, maxRequests int
+var delay, timeout, maxTime time.Duration
 
 // testCmd represents the test command
 var testCmd = &cobra.Command{
-	Use:   "test",
+	Use:   "test [url]",
 	Short: "Run a single load test",
-	Long: `Run a load test against a single URL
+	Long: `Run lode against a single URL
 
 Supports either --delay or --freq for timing.
-e.g. lode test https://example.com`,
+e.g. lode test --freq 20 https://example.com`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if freq != 0 {
 			delay = time.Second / time.Duration(freq)
 		}
 		client := &http.Client{Timeout: timeout}
-		lode := lode.NewLode(args[0], method, delay, client)
+		lode := lode.New(args[0], method, delay, client, concurrency, maxRequests, maxTime)
 		lode.Run()
 	},
 }
@@ -55,7 +55,10 @@ func init() {
 	rootCmd.AddCommand(testCmd)
 
 	testCmd.Flags().IntVarP(&freq, "freq", "f", 0, "Number of requests to make per second")
-	testCmd.Flags().DurationVarP(&delay, "delay", "d", 1 * time.Second, "Time to wait between requests, e.g. 200ms or 1s - defaults to 1s unless --freq specified")
-	testCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5 * time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
+	testCmd.Flags().DurationVarP(&delay, "delay", "d", 1*time.Second, "Time to wait between requests, e.g. 200ms or 1s - defaults to 1s unless --freq specified")
+	testCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
 	testCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP method to use - defaults to GET")
+	testCmd.Flags().IntVarP(&concurrency, "concurrency", "c", 1, "Maximum number of concurrent requests")
+	testCmd.Flags().IntVarP(&maxRequests, "maxRequests", "n", 0, "Maximum number of requests to make - defaults to 0s (unlimited)")
+	testCmd.Flags().DurationVarP(&maxTime, "maxTime", "l", 0*time.Second, "Length of time to make requests, e.g. 20s or 1h - defaults to 0s (unlimited)")
 }
