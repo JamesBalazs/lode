@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -46,7 +48,9 @@ func (l *Lode) Run() {
 	stop := make(chan struct{})
 	defer l.stop(ticker, stop)
 	defer l.report()
+
 	result := make(chan http.Response, 1024)
+	l.closeOnSigterm(result)
 
 	for i := 0; i < l.Concurrency; i++ {
 		go l.work(trigger, stop, result)
@@ -100,4 +104,13 @@ func (l *Lode) report() {
 	fmt.Printf("Target: %s %s\n", l.Request.Method, l.Request.URL)
 	fmt.Printf("Requests made: %d\n", l.ResponseCount)
 	fmt.Printf("Response Breakdown:\n%s\n", histogram)
+}
+
+func (l *Lode) closeOnSigterm(channel chan http.Response) {
+	sigterm := make(chan os.Signal)
+	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigterm
+		close(channel)
+	}()
 }
