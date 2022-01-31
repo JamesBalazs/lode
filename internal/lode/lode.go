@@ -15,14 +15,13 @@ var Logger LoggerInt = log.New(os.Stdout, "", log.LstdFlags)
 var NewRequest = http.NewRequest
 
 type Lode struct {
-	TargetDelay   time.Duration
-	Client        HttpClientInt
-	Request       *http.Request
-	Concurrency   int
-	MaxRequests   int
-	MaxTime       time.Duration
-	Responses     []http.Response
-	ResponseCount int
+	TargetDelay time.Duration
+	Client      HttpClientInt
+	Request     *http.Request
+	Concurrency int
+	MaxRequests int
+	MaxTime     time.Duration
+	Responses   []http.Response
 }
 
 func New(url string, method string, delay time.Duration, client HttpClientInt, concurrency int, maxRequests int, maxTime time.Duration) *Lode {
@@ -47,7 +46,7 @@ func (l *Lode) Run() {
 	trigger := ticker.C
 	stop := make(chan struct{})
 	defer l.stop(ticker, stop)
-	defer l.report()
+	defer l.report(time.Now())
 
 	result := make(chan http.Response, 1024)
 	l.closeOnSigterm(result)
@@ -60,11 +59,12 @@ func (l *Lode) Run() {
 	endTime := startTime.Add(l.MaxTime).UnixNano()
 	checkMaxRequests := l.MaxRequests > 0
 	checkMaxTime := l.MaxTime > 0
+	responseCount := 0
 	for response := range result {
-		l.ResponseCount++
+		responseCount++
 		l.Responses = append(l.Responses, response)
 
-		if (checkMaxRequests && l.ResponseCount >= l.MaxRequests) || (checkMaxTime && time.Now().UnixNano() >= endTime) {
+		if (checkMaxRequests && responseCount >= l.MaxRequests) || (checkMaxTime && time.Now().UnixNano() >= endTime) {
 			return
 		}
 	}
@@ -90,19 +90,25 @@ func (l *Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 	close(stop)
 }
 
-func (l *Lode) report() {
+func (l *Lode) report(startTime time.Time) {
+	duration := time.Now().Sub(startTime).Truncate(10 * time.Millisecond)
+	responseCount := len(l.Responses)
 	responseCodeDistribution := map[int]int{}
 	for _, response := range l.Responses {
 		responseCodeDistribution[response.StatusCode]++
 	}
 	histogram := ""
 	for statusCode, count := range responseCodeDistribution {
-		var percentage = float32(count) / float32(l.ResponseCount)
+		var percentage = float32(count) / float32(responseCount)
 		bar := strings.Repeat("=", int(percentage*20)) + ">"
 		histogram = histogram + fmt.Sprintf("%d: %-21s %dx\n", statusCode, bar, count)
 	}
+	requestRate := float64(responseCount) / float64(duration.Seconds())
 	fmt.Printf("Target: %s %s\n", l.Request.Method, l.Request.URL)
-	fmt.Printf("Requests made: %d\n", l.ResponseCount)
+	fmt.Printf("Concurrency: %d\n", l.Concurrency)
+	fmt.Printf("Requests made: %d\n", responseCount)
+	fmt.Printf("Time taken: %s\n", duration.String())
+	fmt.Printf("Requests per second (avg): %.2f\n\n", requestRate)
 	fmt.Printf("Response Breakdown:\n%s\n", histogram)
 }
 
