@@ -9,7 +9,21 @@ Versatile load testing CLI tool written in Go, with configurable workflows to fa
 - Configurable
 - Open source
 
-## Usage:
+## Example output
+```
+❯ lode test --freq=20 -c 8 -l 5s http://my.example.service
+Target: GET http://my.example.service
+Concurrency: 8
+Requests made: 100
+Time taken: 5.04s
+Requests per second (avg): 19.84
+
+Response Breakdown:
+200: ===================>  98x
+501: =>                    2x
+```
+
+## Usage
 ### `lode test [flags] [url]`
 Used to run a single load test against the specified URL.
 A summary report is printed at the end.
