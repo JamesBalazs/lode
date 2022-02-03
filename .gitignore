@@ -15,5 +15,5 @@
 # vendor/
 
 # Binaries
-lode
+/lode
 dist/
