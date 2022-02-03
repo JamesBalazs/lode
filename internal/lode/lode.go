@@ -2,11 +2,11 @@ package lode
 
 import (
 	"fmt"
+	"github.com/JamesBalazs/lode/internal/lode/report"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -76,7 +76,7 @@ func (l *Lode) work(trigger <-chan time.Time, stop chan struct{}, result chan ht
 		case <-trigger:
 			response, err := l.Client.Do(l.Request)
 			if err != nil {
-				log.Panicf("Error during request: %s", err.Error())
+				Logger.Panicf("Error during request: %s", err.Error())
 			}
 			result <- *response
 		case <-stop:
@@ -91,25 +91,19 @@ func (l *Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 }
 
 func (l *Lode) report(startTime time.Time) {
-	duration := time.Now().Sub(startTime).Truncate(10 * time.Millisecond)
+	duration := time.Now().Sub(startTime)
 	responseCount := len(l.Responses)
-	responseCodeDistribution := map[int]int{}
-	for _, response := range l.Responses {
-		responseCodeDistribution[response.StatusCode]++
-	}
-	histogram := ""
-	for statusCode, count := range responseCodeDistribution {
-		var percentage = float32(count) / float32(responseCount)
-		bar := strings.Repeat("=", int(percentage*20)) + ">"
-		histogram = histogram + fmt.Sprintf("%d: %-21s %dx\n", statusCode, bar, count)
-	}
+	histogram := report.BuildStatusHistogram(l.Responses, responseCount)
 	requestRate := float64(responseCount) / float64(duration.Seconds())
-	fmt.Printf("Target: %s %s\n", l.Request.Method, l.Request.URL)
-	fmt.Printf("Concurrency: %d\n", l.Concurrency)
-	fmt.Printf("Requests made: %d\n", responseCount)
-	fmt.Printf("Time taken: %s\n", duration.String())
-	fmt.Printf("Requests per second (avg): %.2f\n\n", requestRate)
-	fmt.Printf("Response Breakdown:\n%s\n", histogram)
+
+	var output string
+	output += fmt.Sprintf("Target: %s %s\n", l.Request.Method, l.Request.URL)
+	output += fmt.Sprintf("Concurrency: %d\n", l.Concurrency)
+	output += fmt.Sprintf("Requests made: %d\n", responseCount)
+	output += fmt.Sprintf("Time taken: %s\n", duration.Truncate(10*time.Millisecond).String())
+	output += fmt.Sprintf("Requests per second (avg): %.2f\n\n", requestRate)
+	output += fmt.Sprintf("Response Breakdown:\n%s\n", histogram.String())
+	Logger.Printf(output)
 }
 
 func (l *Lode) closeOnSigterm(channel chan http.Response) {
