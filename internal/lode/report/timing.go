@@ -2,9 +2,12 @@ package report
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http/httptrace"
 	"time"
 )
+
+const timingResolution = 1 * time.Millisecond
 
 type Timing struct {
 	DnsStart     time.Time
@@ -48,6 +51,21 @@ func (t *Timing) TotalDuration() time.Duration {
 	} else {
 		return t.Done.Sub(t.DnsStart)
 	}
+}
+
+func (t *Timing) String() string {
+	return fmt.Sprintf(`<=>             DNS Lookup:        %s
+   <=>          TCP Connection:    %s
+      <=>       TLS Handshake:     %s
+         <=>    Server:            %s
+            <=> Response Transfer: %s
+<=============> Total:             %s`,
+		t.DnsLookupDuration().Truncate(timingResolution),
+		t.TcpConnectDuration().Truncate(timingResolution),
+		t.TlsHandshakeDuration().Truncate(timingResolution),
+		t.ServerDuration().Truncate(timingResolution),
+		t.ResponseTransferDuration().Truncate(timingResolution),
+		t.TotalDuration().Truncate(timingResolution))
 }
 
 func NewTrace(timing *Timing) *httptrace.ClientTrace {

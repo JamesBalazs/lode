@@ -47,6 +47,8 @@ e.g. lode test --freq 20 https://example.com`,
 		}
 		client := &http.Client{Timeout: timeout}
 		lode := lode.New(args[0], method, delay, client, concurrency, maxRequests, maxTime)
+
+		defer lode.Report()
 		lode.Run()
 	},
 }
