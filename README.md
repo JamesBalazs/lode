@@ -21,6 +21,17 @@ Requests per second (avg): 19.84
 Response Breakdown:
 200: ===================>  98x
 501: =>                    2x
+
+Percentile latency breakdown:
+50th: 90ms
+66th: 95ms
+75th: 100ms
+80th: 104ms
+90th: 114ms
+95th: 130ms
+98th: 171ms
+99th: 221ms
+100th: 239ms
 ```
 
 ## Usage
@@ -49,6 +60,10 @@ One of either `--delay` or `--freq` is required. If both are provided, delay wil
 ### `lode workflow [flags] [path]` (not yet implemented)
 Used to run a sequence of load tests, as defined in the YAML file at the specified path.
 
+### `lode time [flags] [path]` (not yet implemented)
+Used to run a single request, and print the timings of each stage of the request.
+
+
 **Expected YAML format:**
 ```
 jobs:
@@ -66,4 +81,4 @@ jobs:
 ## Planned Features
 - Workflows for CI/automation use
 - Log responses to a file
-- Response timing and better analysis
+- Better analysis for recorded response timing
