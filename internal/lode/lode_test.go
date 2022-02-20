@@ -20,7 +20,7 @@ var client = &mocks.Client{}
 func TestNewReturnsLode(t *testing.T) {
 	assert := assert.New(t)
 	expectedRequest, _ := http.NewRequest(method, url, nil)
-	expectedLode := &Lode{delay, client, expectedRequest, 1, 1, 0, []http.Response(nil)}
+	expectedLode := &Lode{delay, client, expectedRequest, 1, 1, 0, ResponseTimings(nil)}
 
 	lode := New(url, method, delay, client, 1, 1, 0)
 
@@ -70,7 +70,4 @@ func TestRunErrorDoingRequest(t *testing.T) {
 	lode.Run()
 
 	clientMock.AssertExpectations(t)
-
 }
-
-//

@@ -1,6 +1,8 @@
 package lode
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type HttpClientInt interface {
 	Do(*http.Request) (*http.Response, error)
