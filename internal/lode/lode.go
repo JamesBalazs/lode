@@ -23,6 +23,7 @@ type Lode struct {
 	Concurrency     int
 	MaxRequests     int
 	MaxTime         time.Duration
+	StartTime       time.Time
 	ResponseTimings ResponseTimings
 }
 
@@ -48,7 +49,7 @@ func (l *Lode) Run() {
 	trigger := ticker.C
 	stop := make(chan struct{})
 	defer l.stop(ticker, stop)
-	defer l.report(time.Now())
+	l.StartTime = time.Now()
 
 	result := make(chan ResponseTiming, 1024)
 	l.closeOnSigterm(result)
@@ -97,8 +98,8 @@ func (l *Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 	close(stop)
 }
 
-func (l *Lode) report(startTime time.Time) {
-	duration := time.Now().Sub(startTime)
+func (l *Lode) Report() {
+	duration := time.Now().Sub(l.StartTime)
 	responseCount := len(l.ResponseTimings)
 	histogram := report.BuildStatusHistogram(l.ResponseTimings.Responses(), responseCount)
 	latencies := report.BuildLatencyPercentiles(l.ResponseTimings.Timings())
@@ -108,10 +109,16 @@ func (l *Lode) report(startTime time.Time) {
 	output += fmt.Sprintf("Target: %s %s\n", l.Request.Method, l.Request.URL)
 	output += fmt.Sprintf("Concurrency: %d\n", l.Concurrency)
 	output += fmt.Sprintf("Requests made: %d\n", responseCount)
-	output += fmt.Sprintf("Time taken: %s\n", duration.Truncate(10*time.Millisecond).String())
+	output += fmt.Sprintf("Time taken: %s\n", duration.Truncate(10*time.Millisecond))
 	output += fmt.Sprintf("Requests per second (avg): %.2f\n\n", requestRate)
-	output += fmt.Sprintf("Response code breakdown:\n%s\n", histogram.String())
-	output += fmt.Sprintf("Percentile latency breakdown:\n%s\n", latencies.String())
+
+	if responseCount > 1 {
+		output += fmt.Sprintf("Response code breakdown:\n%s\n", histogram.String())
+		output += fmt.Sprintf("Percentile latency breakdown:\n%s\n", latencies.String())
+	} else {
+		timing := l.ResponseTimings[0].Timing
+		output += fmt.Sprintf("Timing breakdown:\n%s\n", timing.String())
+	}
 	Logger.Printf(output)
 }
 

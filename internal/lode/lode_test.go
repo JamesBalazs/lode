@@ -20,7 +20,16 @@ var client = &mocks.Client{}
 func TestNewReturnsLode(t *testing.T) {
 	assert := assert.New(t)
 	expectedRequest, _ := http.NewRequest(method, url, nil)
-	expectedLode := &Lode{delay, client, expectedRequest, 1, 1, 0, ResponseTimings(nil)}
+	expectedLode := &Lode{
+		TargetDelay:     delay,
+		Client:          client,
+		Request:         expectedRequest,
+		Concurrency:     1,
+		MaxRequests:     1,
+		MaxTime:         0,
+		StartTime:       time.Time{},
+		ResponseTimings: ResponseTimings(nil),
+	}
 
 	lode := New(url, method, delay, client, 1, 1, 0)
 
@@ -48,7 +57,7 @@ func TestRunDoesRequest(t *testing.T) {
 	response := &http.Response{}
 	clientMock.On("Do", mock.Anything).Return(response, nil)
 	logMock := new(mocks.Log)
-	logMock.On("Printf", mock.AnythingOfType("string")).Return() // report after requests TODO: find a more specific way to mock this
+	logMock.On("Printf", mock.AnythingOfType("string")).Return() // Report after requests TODO: find a more specific way to mock this
 	Logger = logMock
 
 	lode := New(url, method, delay, clientMock, 1, 1, 0)
@@ -63,7 +72,7 @@ func TestRunErrorDoingRequest(t *testing.T) {
 	clientMock.On("Do", mock.Anything).Return(&http.Response{}, errors.New("error doing request"))
 	logMock := new(mocks.Log)
 	logMock.On("Panicf", "Error during request: %s", "error doing request")
-	logMock.On("Printf", mock.AnythingOfType("string")).Return() // report after requests TODO: find a more specific way to mock this
+	logMock.On("Printf", mock.AnythingOfType("string")).Return() // Report after requests TODO: find a more specific way to mock this
 	Logger = logMock
 
 	lode := New(url, method, delay, clientMock, 1, 1, 0)

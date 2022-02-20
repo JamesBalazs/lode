@@ -57,12 +57,40 @@ One of either `--delay` or `--freq` is required. If both are provided, delay wil
 - `lode test -d 1h -n 24 http://www.google.com` make 1 req/hr to Google until 24 requests have been made
 - `lode test -f 40 -c 8 -l 1m -n 1000 http://www.google.copm` make 40 req/sec to Google, split across 8 threads, for up to 1 minutes or until 1000 requests have been made (whichever comes first) 
 
+### `lode time [flags] [path]`
+Used to run a single request.
+A breakdown of the request's timing is printed at the end.
+
+**Supported flags:**
+| Flag | Shorthand | Usage |
+| --- | --- | --- |
+| `--timeout` | `-t` | Timeout per request, e.g. 200ms or 1s - defaults to 5s |
+| `--method` | `-m` | HTTP method to use - defaults to GET |
+
+**Example:**
+
+`lode time http://www.google.com` make 1 request to Google and print timings
+
+**Example output:**
+```
+❯ lode time https://www.google.com/
+Target: GET https://www.google.com/
+Concurrency: 1
+Requests made: 1
+Time taken: 290ms
+Requests per second (avg): 3.36
+
+Timing breakdown:
+<=>             DNS Lookup:        24ms
+   <=>          TCP Connection:    21ms
+      <=>       TLS Handshake:     184ms
+         <=>    Server:            66ms
+            <=> Response Transfer: 0s
+<=============> Total:             296ms
+```
+
 ### `lode workflow [flags] [path]` (not yet implemented)
 Used to run a sequence of load tests, as defined in the YAML file at the specified path.
-
-### `lode time [flags] [path]` (not yet implemented)
-Used to run a single request, and print the timings of each stage of the request.
-
 
 **Expected YAML format:**
 ```
