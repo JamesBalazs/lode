@@ -82,3 +82,12 @@ jobs:
 - Workflows for CI/automation use
 - Log responses to a file
 - Better analysis for recorded response timing
+
+## Releasing
+Releases are built for multiple platforms using [goreleaser](https://github.com/goreleaser/goreleaser).
+
+Once you have it installed, you need a `GITHUB_TOKEN` envar with `repo` scope. Then you can tag, push, build and release by simply running:
+```
+git tag -a "v1.2.3"
+goreleaser release --rm-dist
+```
