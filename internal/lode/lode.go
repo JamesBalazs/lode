@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var Logger LoggerInt = log.New(os.Stdout, "", log.LstdFlags)
+var Logger LoggerInt = log.New(os.Stdout, "", 0)
 var NewRequest = http.NewRequest
 
 type Lode struct {
