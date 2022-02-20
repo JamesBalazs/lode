@@ -101,6 +101,7 @@ func (l *Lode) report(startTime time.Time) {
 	duration := time.Now().Sub(startTime)
 	responseCount := len(l.ResponseTimings)
 	histogram := report.BuildStatusHistogram(l.ResponseTimings.Responses(), responseCount)
+	latencies := report.BuildLatencyPercentiles(l.ResponseTimings.Timings())
 	requestRate := float64(responseCount) / float64(duration.Seconds())
 
 	var output string
@@ -109,7 +110,8 @@ func (l *Lode) report(startTime time.Time) {
 	output += fmt.Sprintf("Requests made: %d\n", responseCount)
 	output += fmt.Sprintf("Time taken: %s\n", duration.Truncate(10*time.Millisecond).String())
 	output += fmt.Sprintf("Requests per second (avg): %.2f\n\n", requestRate)
-	output += fmt.Sprintf("Response Breakdown:\n%s\n", histogram.String())
+	output += fmt.Sprintf("Response code breakdown:\n%s\n", histogram.String())
+	output += fmt.Sprintf("Percentile latency breakdown:\n%s\n", latencies.String())
 	Logger.Printf(output)
 }
 
