@@ -1,6 +1,11 @@
 # Lode
 
 [![Coverage Status](https://coveralls.io/repos/github/JamesBalazs/lode/badge.svg?branch=main&t=LIyVhQ)](https://coveralls.io/github/JamesBalazs/lode?branch=main)
+[![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
+[![macOS](https://svgshare.com/i/ZjP.svg)](https://svgshare.com/i/ZjP.svg)
+[![Windows](https://svgshare.com/i/ZhY.svg)](https://svgshare.com/i/ZhY.svg)
+[![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 Versatile load testing CLI tool written in Go, with configurable workflows to facilitate automated load testing in CI.
 
