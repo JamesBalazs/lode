@@ -32,6 +32,7 @@ import (
 var method, body, file string
 var freq, concurrency, maxRequests int
 var delay, timeout, maxTime time.Duration
+var headers []string
 
 // testCmd represents the test command
 var testCmd = &cobra.Command{
@@ -49,7 +50,7 @@ e.g. lode test --freq 20 https://example.com`,
 
 		body := files.ReaderFromFileOrString(file, body)
 		client := &http.Client{Timeout: timeout}
-		lode := lode.New(args[0], method, delay, client, concurrency, maxRequests, maxTime, body)
+		lode := lode.New(args[0], method, delay, client, concurrency, maxRequests, maxTime, body, headers)
 		defer lode.Report()
 		lode.Run()
 	},
@@ -68,4 +69,5 @@ func init() {
 	testCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
 	testCmd.Flags().StringVarP(&body, "body", "b", "", "POST/PUT body")
 	testCmd.Flags().StringVarP(&file, "file", "F", "", "POST/PUT body filepath")
+	testCmd.Flags().StringSliceVarP(&headers, "header", "H", []string{}, "Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers")
 }

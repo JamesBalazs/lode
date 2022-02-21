@@ -10,6 +10,7 @@ import (
 	"net/http/httptrace"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -28,11 +29,16 @@ type Lode struct {
 	ResponseTimings ResponseTimings
 }
 
-func New(url string, method string, delay time.Duration, client HttpClientInt, concurrency int, maxRequests int, maxTime time.Duration, body io.Reader) *Lode {
+func New(url string, method string, delay time.Duration, client HttpClientInt, concurrency int, maxRequests int, maxTime time.Duration, body io.Reader, headers []string) *Lode {
 	req, err := NewRequest(method, url, body)
 	if err != nil {
 		Logger.Panicf("Error creating request: %s", err.Error())
 		return nil
+	}
+
+	for _, headerString := range headers {
+		headerParts := strings.SplitN(headerString, "=", 2)
+		req.Header[headerParts[0]] = []string{headerParts[1]}
 	}
 
 	return &Lode{
