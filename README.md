@@ -1,6 +1,8 @@
 # Lode
 
-Versatile load testing CLI tool written in Go, with configurable workflows to facilitate automated load testing in CI. 
+[![Coverage Status](https://coveralls.io/repos/github/JamesBalazs/lode/badge.svg?branch=main&t=LIyVhQ)](https://coveralls.io/github/JamesBalazs/lode?branch=workflows)
+
+Versatile load testing CLI tool written in Go, with configurable workflows to facilitate automated load testing in CI.
 
 **Features:**
 - Lightweight
@@ -118,9 +120,16 @@ jobs:
 - Better analysis for recorded response timing
 
 ## Releasing
-Releases are built for multiple platforms using [goreleaser](https://github.com/goreleaser/goreleaser).
+Releases are built for multiple platforms using [goreleaser](https://github.com/goreleaser/goreleaser) in GitHub Actions.
+Simply add a tag starting with `v` and the Action will release the version.
 
-Once you have it installed, you need a `GITHUB_TOKEN` envar with `repo` scope. Then you can tag, push, build and release by simply running:
+```
+git checkout main
+git tag -a "v1.2.3"
+git push
+```
+
+If you need to install locally, you need a `GITHUB_TOKEN` envar with `repo` scope. Then you can tag, push, build and release by running:
 ```
 git tag -a "v1.2.3"
 goreleaser release --rm-dist
