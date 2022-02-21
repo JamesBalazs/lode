@@ -1,6 +1,6 @@
 # Lode
 
-[![Coverage Status](https://coveralls.io/repos/github/JamesBalazs/lode/badge.svg?branch=main&t=LIyVhQ)](https://coveralls.io/github/JamesBalazs/lode?branch=workflows)
+[![Coverage Status](https://coveralls.io/repos/github/JamesBalazs/lode/badge.svg?branch=main&t=LIyVhQ)](https://coveralls.io/github/JamesBalazs/lode?branch=main)
 
 Versatile load testing CLI tool written in Go, with configurable workflows to facilitate automated load testing in CI.
 
@@ -126,7 +126,7 @@ Simply add a tag starting with `v` and the Action will release the version.
 ```
 git checkout main
 git tag -a "v1.2.3"
-git push
+git push --tags
 ```
 
 If you need to install locally, you need a `GITHUB_TOKEN` envar with `repo` scope. Then you can tag, push, build and release by running:
