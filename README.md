@@ -51,8 +51,7 @@ A summary report is printed at the end.
 | `--timeout` | `-t` | Timeout per request, e.g. 200ms or 1s - defaults to 5s |
 | `--body` | `-b` | POST/PUT body |
 | `--file` | `-F` | POST/PUT body filepath |
-
-
+| `--header` | `-H` | Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers |
 
 One of either `--delay` or `--freq` is required. If both are provided, delay will be calculated from the given frequency.
 
@@ -72,6 +71,7 @@ A breakdown of the request's timing is printed at the end.
 | `--timeout` | `-t` | Timeout per request, e.g. 200ms or 1s - defaults to 5s |
 | `--body` | `-b` | POST/PUT body |
 | `--file` | `-F` | POST/PUT body filepath |
+| `--header` | `-H` | Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers |
 
 **Example:**
 

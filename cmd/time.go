@@ -40,7 +40,7 @@ e.g. lode time --timeout 3s -m GET https://example.com`,
 	Run: func(cmd *cobra.Command, args []string) {
 		body := files.ReaderFromFileOrString(file, body)
 		client := &http.Client{Timeout: timeout}
-		lode := lode.New(args[0], method, time.Duration(1), client, 1, 1, 0, body)
+		lode := lode.New(args[0], method, time.Duration(1), client, 1, 1, 0, body, headers)
 
 		defer lode.Report()
 		lode.Run()
@@ -54,5 +54,5 @@ func init() {
 	timeCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
 	timeCmd.Flags().StringVarP(&body, "body", "b", "", "POST/PUT body")
 	timeCmd.Flags().StringVarP(&file, "file", "F", "", "POST/PUT body filepath")
-
+	timeCmd.Flags().StringSliceVarP(&headers, "header", "H", []string{}, "Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers")
 }
