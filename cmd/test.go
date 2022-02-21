@@ -22,13 +22,14 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"github.com/JamesBalazs/lode/internal/files"
 	"github.com/JamesBalazs/lode/internal/lode"
 	"github.com/spf13/cobra"
 	"net/http"
 	"time"
 )
 
-var method string
+var method, body, file string
 var freq, concurrency, maxRequests int
 var delay, timeout, maxTime time.Duration
 
@@ -45,9 +46,10 @@ e.g. lode test --freq 20 https://example.com`,
 		if freq != 0 {
 			delay = time.Second / time.Duration(freq)
 		}
-		client := &http.Client{Timeout: timeout}
-		lode := lode.New(args[0], method, delay, client, concurrency, maxRequests, maxTime)
 
+		body := files.ReaderFromFileOrString(file, body)
+		client := &http.Client{Timeout: timeout}
+		lode := lode.New(args[0], method, delay, client, concurrency, maxRequests, maxTime, body)
 		defer lode.Report()
 		lode.Run()
 	},
@@ -58,9 +60,12 @@ func init() {
 
 	testCmd.Flags().IntVarP(&freq, "freq", "f", 0, "Number of requests to make per second")
 	testCmd.Flags().DurationVarP(&delay, "delay", "d", 1*time.Second, "Time to wait between requests, e.g. 200ms or 1s - defaults to 1s unless --freq specified")
-	testCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
-	testCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP method to use - defaults to GET")
 	testCmd.Flags().IntVarP(&concurrency, "concurrency", "c", 1, "Maximum number of concurrent requests")
 	testCmd.Flags().IntVarP(&maxRequests, "maxRequests", "n", 0, "Maximum number of requests to make - defaults to 0s (unlimited)")
 	testCmd.Flags().DurationVarP(&maxTime, "maxTime", "l", 0*time.Second, "Length of time to make requests, e.g. 20s or 1h - defaults to 0s (unlimited)")
+
+	testCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP method to use - defaults to GET")
+	testCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
+	testCmd.Flags().StringVarP(&body, "body", "b", "", "POST/PUT body")
+	testCmd.Flags().StringVarP(&file, "file", "F", "", "POST/PUT body filepath")
 }

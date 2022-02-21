@@ -22,6 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"github.com/JamesBalazs/lode/internal/files"
 	"github.com/JamesBalazs/lode/internal/lode"
 	"net/http"
 	"time"
@@ -37,8 +38,9 @@ var timeCmd = &cobra.Command{
 
 e.g. lode time --timeout 3s -m GET https://example.com`,
 	Run: func(cmd *cobra.Command, args []string) {
+		body := files.ReaderFromFileOrString(file, body)
 		client := &http.Client{Timeout: timeout}
-		lode := lode.New(args[0], method, time.Duration(1), client, 1, 1, 0)
+		lode := lode.New(args[0], method, time.Duration(1), client, 1, 1, 0, body)
 
 		defer lode.Report()
 		lode.Run()
@@ -48,6 +50,9 @@ e.g. lode time --timeout 3s -m GET https://example.com`,
 func init() {
 	rootCmd.AddCommand(timeCmd)
 
-	timeCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
 	timeCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP method to use - defaults to GET")
+	timeCmd.Flags().DurationVarP(&timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
+	timeCmd.Flags().StringVarP(&body, "body", "b", "", "POST/PUT body")
+	timeCmd.Flags().StringVarP(&file, "file", "F", "", "POST/PUT body filepath")
+
 }

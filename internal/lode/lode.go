@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/JamesBalazs/lode/internal/lode/report"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -27,8 +28,8 @@ type Lode struct {
 	ResponseTimings ResponseTimings
 }
 
-func New(url string, method string, delay time.Duration, client HttpClientInt, concurrency int, maxRequests int, maxTime time.Duration) *Lode {
-	req, err := NewRequest(method, url, nil)
+func New(url string, method string, delay time.Duration, client HttpClientInt, concurrency int, maxRequests int, maxTime time.Duration, body io.Reader) *Lode {
+	req, err := NewRequest(method, url, body)
 	if err != nil {
 		Logger.Panicf("Error creating request: %s", err.Error())
 		return nil
