@@ -44,11 +44,15 @@ A summary report is printed at the end.
 | --- | --- | --- |
 | `--freq` | `-f` | Number of requests to make per second |
 | `--delay` | `-d` | Time to wait between requests, e.g. 200ms or 1s - defaults to 1s unless --freq specified |
-| `--timeout` | `-t` | Timeout per request, e.g. 200ms or 1s - defaults to 5s |
-| `--method` | `-m` | HTTP method to use - defaults to GET |
 | `--concurrency` | `-c` | Maximum number of concurrent requests |
 | `--maxRequests` | `-n` | Maximum number of requests to make - defaults to 0s (unlimited) |
 | `--maxTime` | `-l` | Length of time to make requests, e.g. 20s or 1h - defaults to 0s (unlimited) |
+| `--method` | `-m` | HTTP method to use - defaults to GET |
+| `--timeout` | `-t` | Timeout per request, e.g. 200ms or 1s - defaults to 5s |
+| `--body` | `-b` | POST/PUT body |
+| `--file` | `-F` | POST/PUT body filepath |
+
+
 
 One of either `--delay` or `--freq` is required. If both are provided, delay will be calculated from the given frequency.
 
@@ -64,8 +68,10 @@ A breakdown of the request's timing is printed at the end.
 **Supported flags:**
 | Flag | Shorthand | Usage |
 | --- | --- | --- |
-| `--timeout` | `-t` | Timeout per request, e.g. 200ms or 1s - defaults to 5s |
 | `--method` | `-m` | HTTP method to use - defaults to GET |
+| `--timeout` | `-t` | Timeout per request, e.g. 200ms or 1s - defaults to 5s |
+| `--body` | `-b` | POST/PUT body |
+| `--file` | `-F` | POST/PUT body filepath |
 
 **Example:**
 

@@ -31,7 +31,7 @@ func TestNewReturnsLode(t *testing.T) {
 		ResponseTimings: ResponseTimings(nil),
 	}
 
-	lode := New(url, method, delay, client, 1, 1, 0)
+	lode := New(url, method, delay, client, 1, 1, 0, nil)
 
 	assert.Equal(expectedLode, lode)
 }
@@ -45,7 +45,7 @@ func TestNewErrorCreatingRequest(t *testing.T) {
 		return nil, errors.New("could not create request")
 	}
 
-	lode := New(url, method, delay, client, 1, 1, 0)
+	lode := New(url, method, delay, client, 1, 1, 0, nil)
 
 	assert.Nil(lode)
 	logMock.AssertExpectations(t)
@@ -60,7 +60,7 @@ func TestRunDoesRequest(t *testing.T) {
 	logMock.On("Printf", mock.AnythingOfType("string")).Return() // Report after requests TODO: find a more specific way to mock this
 	Logger = logMock
 
-	lode := New(url, method, delay, clientMock, 1, 1, 0)
+	lode := New(url, method, delay, clientMock, 1, 1, 0, nil)
 	lode.Run()
 
 	clientMock.AssertExpectations(t)
@@ -75,7 +75,7 @@ func TestRunErrorDoingRequest(t *testing.T) {
 	logMock.On("Printf", mock.AnythingOfType("string")).Return() // Report after requests TODO: find a more specific way to mock this
 	Logger = logMock
 
-	lode := New(url, method, delay, clientMock, 1, 1, 0)
+	lode := New(url, method, delay, clientMock, 1, 1, 0, nil)
 	lode.Run()
 
 	clientMock.AssertExpectations(t)
