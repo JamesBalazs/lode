@@ -48,8 +48,20 @@ func TestTiming_TotalDuration(t *testing.T) {
 	assert.Equal(t, 62*time.Millisecond, timing.TotalDuration())
 
 	withoutDnsLookup := timing
-	withoutDnsLookup.DnsStart = time.Time{} // did not do DNS lookup
+	withoutDnsLookup.DnsStart = time.Time{}
 	assert.Equal(t, 56*time.Millisecond, withoutDnsLookup.TotalDuration())
+
+	reusingConnectionTls := withoutDnsLookup
+	reusingConnectionTls.ConnectStart = time.Time{}
+	assert.Equal(t, 42*time.Millisecond, reusingConnectionTls.TotalDuration())
+
+	reusingConnection := reusingConnectionTls
+	reusingConnection.TlsStart = time.Time{}
+	assert.Equal(t, 30*time.Millisecond, reusingConnection.TotalDuration())
+
+	noTimingData := reusingConnection
+	noTimingData.GotConn = time.Time{}
+	assert.Equal(t, time.Duration(0), noTimingData.TotalDuration())
 }
 
 func TestTiming_String(t *testing.T) {

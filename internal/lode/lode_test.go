@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -17,7 +18,7 @@ var params = Params{
 	Method:      "GET",
 	Body:        "",
 	File:        "",
-	Freq:        0,
+	Freq:        1,
 	Concurrency: 1,
 	MaxRequests: 1,
 	Delay:       time.Second,
@@ -26,14 +27,15 @@ var params = Params{
 	Headers:     nil,
 }
 
-var clientMock = &mocks.Client{}
-
 func TestNewLode_ReturnsLode(t *testing.T) {
 	assert := assert.New(t)
+	expectedRequest, _ := http.NewRequest(params.Method, params.Url, nil)
+	logMock := new(mocks.Log)
+	Logger = logMock
+	clientMock := new(mocks.Client)
 	NewClient = func(timeout time.Duration) HttpClientInt {
 		return clientMock
 	}
-	expectedRequest, _ := http.NewRequest(params.Method, params.Url, nil)
 	NewRequest = func(method, url string, body io.Reader) (*http.Request, error) {
 		return expectedRequest, nil
 	}
@@ -56,11 +58,15 @@ func TestNewLode_ReturnsLode(t *testing.T) {
 func TestNewLode_ErrorCreatingRequest(t *testing.T) {
 	assert := assert.New(t)
 	logMock := new(mocks.Log)
-	logMock.On("Panicf", "Error creating request: %s", "could not create request")
 	Logger = logMock
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) HttpClientInt {
+		return clientMock
+	}
 	NewRequest = func(string, string, io.Reader) (*http.Request, error) {
 		return nil, errors.New("could not create request")
 	}
+	logMock.On("Panicf", "Error creating request: %s", "could not create request")
 
 	lode := New(params)
 
@@ -89,6 +95,10 @@ func TestNewLode_SetsHeaders(t *testing.T) {
 }
 
 func TestLode_RunDoesRequest(t *testing.T) {
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) HttpClientInt {
+		return clientMock
+	}
 	response := &http.Response{}
 	clientMock.On("Do", mock.Anything).Return(response, nil)
 	logMock := new(mocks.Log)
@@ -102,6 +112,10 @@ func TestLode_RunDoesRequest(t *testing.T) {
 }
 
 func TestLode_RunErrorDoingRequest(t *testing.T) {
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) HttpClientInt {
+		return clientMock
+	}
 	clientMock.On("Do", mock.Anything).Return(&http.Response{}, errors.New("error doing request"))
 	logMock := new(mocks.Log)
 	logMock.On("Panicf", "Error during request: %s", "error doing request")
@@ -110,20 +124,58 @@ func TestLode_RunErrorDoingRequest(t *testing.T) {
 	lode := New(params)
 	lode.Run()
 
+	logMock.AssertExpectations(t)
 	clientMock.AssertExpectations(t)
 }
 
-func TestLode_Report(t *testing.T) {
-	clientMock := new(mocks.Client)
-	response := &http.Response{}
-	clientMock.On("Do", mock.Anything).Return(response, nil)
+func TestLode_ReportOneRequest(t *testing.T) {
 	logMock := new(mocks.Log)
 	Logger = logMock
 	lode := New(params)
-	lode.Run()
-	logMock.On("Printf", mock.AnythingOfType("string")).Return() // Report after requests TODO: find a more specific way to mock this
+	lode.ResponseTimings = ResponseTimings{
+		ResponseTiming{Response: http.Response{}},
+	}
+	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
+		result, _ := regexp.MatchString("Timing breakdown", str)
+		return result
+	})).Return()
 
 	lode.Report()
 
 	logMock.AssertExpectations(t)
 }
+
+func TestLode_ReportMultipleRequests(t *testing.T) {
+	logMock := new(mocks.Log)
+	Logger = logMock
+	lode := New(params)
+	lode.ResponseTimings = ResponseTimings{
+		ResponseTiming{Response: http.Response{}},
+		ResponseTiming{Response: http.Response{}},
+	}
+	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
+		result1, _ := regexp.MatchString("Response code breakdown", str)
+		result2, _ := regexp.MatchString("Percentile latency breakdown", str)
+		return result1 && result2
+	})).Return()
+
+	lode.Report()
+
+	logMock.AssertExpectations(t)
+}
+
+func TestLode_ReportNoRequests(t *testing.T) {
+	logMock := new(mocks.Log)
+	Logger = logMock
+	lode := New(params)
+	lode.ResponseTimings = ResponseTimings{}
+	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
+		result, _ := regexp.MatchString("No requests made...", str)
+		return result
+	})).Return()
+
+	lode.Report()
+
+	logMock.AssertExpectations(t)
+}
+
