@@ -11,5 +11,6 @@ type HttpClientInt interface {
 type LoggerInt interface {
 	Println(...interface{})
 	Printf(string, ...interface{})
+	Panicln(...interface{})
 	Panicf(string, ...interface{})
 }

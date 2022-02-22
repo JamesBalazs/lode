@@ -23,6 +23,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/JamesBalazs/lode/internal/lode"
 	"github.com/spf13/cobra"
 	"os"
 
@@ -31,11 +32,13 @@ import (
 
 var cfgFile string
 
+var params = lode.Params{}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "lode",
 	Short: "Load testing CLI tool with workflows/jobs and concurrency",
-	Long: `Load testing CLI tool with workflows/jobs and concurrency`,
+	Long:  `Load testing CLI tool with workflows/jobs and concurrency`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },

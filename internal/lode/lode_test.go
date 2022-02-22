@@ -12,18 +12,34 @@ import (
 	"time"
 )
 
-const url = "https://www.example.com"
-const method = "GET"
-const delay = time.Second
+var params = Params{
+	Url:         "https://www.example.com",
+	Method:      "GET",
+	Body:        "",
+	File:        "",
+	Freq:        0,
+	Concurrency: 1,
+	MaxRequests: 1,
+	Delay:       time.Second,
+	Timeout:     0,
+	MaxTime:     0,
+	Headers:     nil,
+}
 
-var client = &mocks.Client{}
+var clientMock = &mocks.Client{}
 
 func TestNewLode_ReturnsLode(t *testing.T) {
 	assert := assert.New(t)
-	expectedRequest, _ := http.NewRequest(method, url, nil)
+	NewClient = func(timeout time.Duration) HttpClientInt {
+		return clientMock
+	}
+	expectedRequest, _ := http.NewRequest(params.Method, params.Url, nil)
+	NewRequest = func(method, url string, body io.Reader) (*http.Request, error) {
+		return expectedRequest, nil
+	}
 	expectedLode := &Lode{
-		TargetDelay:     delay,
-		Client:          client,
+		TargetDelay:     params.Delay,
+		Client:          clientMock,
 		Request:         expectedRequest,
 		Concurrency:     1,
 		MaxRequests:     1,
@@ -32,7 +48,7 @@ func TestNewLode_ReturnsLode(t *testing.T) {
 		ResponseTimings: ResponseTimings(nil),
 	}
 
-	lode := New(url, method, delay, client, 1, 1, 0, nil, nil)
+	lode := New(params)
 
 	assert.Equal(expectedLode, lode)
 }
@@ -46,7 +62,7 @@ func TestNewLode_ErrorCreatingRequest(t *testing.T) {
 		return nil, errors.New("could not create request")
 	}
 
-	lode := New(url, method, delay, client, 1, 1, 0, nil, nil)
+	lode := New(params)
 
 	assert.Nil(lode)
 	logMock.AssertExpectations(t)
@@ -54,31 +70,31 @@ func TestNewLode_ErrorCreatingRequest(t *testing.T) {
 }
 
 func TestNewLode_SetsBody(t *testing.T) {
-	body := strings.NewReader("{\"example\":\"value\"}")
-	expectedBody := io.NopCloser(body)
+	params.Body = "{\"example\":\"value\"}"
+	expectedBody := io.NopCloser(strings.NewReader(params.Body))
 
-	lode := New(url, method, delay, client, 1, 1, 0, body, nil)
+	lode := New(params)
 
 	assert.Equal(t, expectedBody, lode.Request.Body)
+	params.Body = ""
 }
 
 func TestNewLode_SetsHeaders(t *testing.T) {
-	headers := []string{"Content-Type=application/json", "X-Something=value"}
+	params.Headers = []string{"Content-Type=application/json", "X-Something=value"}
 	expectedHeader := http.Header{"Content-Type": {"application/json"}, "X-Something": {"value"}}
 
-	lode := New(url, method, delay, client, 1, 1, 0, nil, headers)
+	lode := New(params)
 
 	assert.Equal(t, expectedHeader, lode.Request.Header)
 }
 
 func TestLode_RunDoesRequest(t *testing.T) {
-	clientMock := new(mocks.Client)
 	response := &http.Response{}
 	clientMock.On("Do", mock.Anything).Return(response, nil)
 	logMock := new(mocks.Log)
 	Logger = logMock
 
-	lode := New(url, method, delay, clientMock, 1, 1, 0, nil, nil)
+	lode := New(params)
 	lode.Run()
 
 	clientMock.AssertExpectations(t)
@@ -86,13 +102,12 @@ func TestLode_RunDoesRequest(t *testing.T) {
 }
 
 func TestLode_RunErrorDoingRequest(t *testing.T) {
-	clientMock := new(mocks.Client)
 	clientMock.On("Do", mock.Anything).Return(&http.Response{}, errors.New("error doing request"))
 	logMock := new(mocks.Log)
 	logMock.On("Panicf", "Error during request: %s", "error doing request")
 	Logger = logMock
 
-	lode := New(url, method, delay, clientMock, 1, 1, 0, nil, nil)
+	lode := New(params)
 	lode.Run()
 
 	clientMock.AssertExpectations(t)
@@ -104,7 +119,7 @@ func TestLode_Report(t *testing.T) {
 	clientMock.On("Do", mock.Anything).Return(response, nil)
 	logMock := new(mocks.Log)
 	Logger = logMock
-	lode := New(url, method, delay, clientMock, 1, 1, 0, nil, nil)
+	lode := New(params)
 	lode.Run()
 	logMock.On("Printf", mock.AnythingOfType("string")).Return() // Report after requests TODO: find a more specific way to mock this
 

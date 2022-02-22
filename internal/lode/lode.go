@@ -3,8 +3,8 @@ package lode
 import (
 	"context"
 	"fmt"
+	"github.com/JamesBalazs/lode/internal/files"
 	"github.com/JamesBalazs/lode/internal/lode/report"
-	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -17,6 +17,9 @@ import (
 
 var Logger LoggerInt = log.New(os.Stdout, "", 0)
 var NewRequest = http.NewRequest
+var NewClient = func(timeout time.Duration) HttpClientInt {
+	return &http.Client{Timeout: timeout}
+}
 
 type Lode struct {
 	TargetDelay     time.Duration
@@ -29,25 +32,30 @@ type Lode struct {
 	ResponseTimings ResponseTimings
 }
 
-func New(url string, method string, delay time.Duration, client HttpClientInt, concurrency int, maxRequests int, maxTime time.Duration, body io.Reader, headers []string) *Lode {
-	req, err := NewRequest(method, url, body)
+func New(params Params) *Lode {
+	if params.Freq != 0 {
+		params.Delay = time.Second / time.Duration(params.Freq)
+	}
+
+	body := files.ReaderFromFileOrString(params.File, params.Body)
+	req, err := NewRequest(params.Method, params.Url, body)
 	if err != nil {
 		Logger.Panicf("Error creating request: %s", err.Error())
 		return nil
 	}
 
-	for _, headerString := range headers {
+	for _, headerString := range params.Headers {
 		headerParts := strings.SplitN(headerString, "=", 2)
 		req.Header[headerParts[0]] = []string{headerParts[1]}
 	}
 
 	return &Lode{
-		TargetDelay: delay,
-		Client:      client,
+		TargetDelay: params.Delay,
+		Client:      NewClient(params.Timeout),
 		Request:     req,
-		Concurrency: concurrency,
-		MaxRequests: maxRequests,
-		MaxTime:     maxTime,
+		Concurrency: params.Concurrency,
+		MaxRequests: params.MaxRequests,
+		MaxTime:     params.MaxTime,
 	}
 }
 
