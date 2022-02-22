@@ -25,7 +25,7 @@ Requests made: 100
 Time taken: 5.04s
 Requests per second (avg): 19.84
 
-Response Breakdown:
+Response breakdown:
 200: ===================>  98x
 501: =>                    2x
 
