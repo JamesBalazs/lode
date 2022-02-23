@@ -122,9 +122,11 @@ func (l *Lode) Report() {
 	if responseCount > 1 {
 		output += fmt.Sprintf("Response code breakdown:\n%s\n", histogram.String())
 		output += fmt.Sprintf("Percentile latency breakdown:\n%s\n", latencies.String())
-	} else {
+	} else if responseCount == 1 {
 		timing := l.ResponseTimings[0].Timing
 		output += fmt.Sprintf("Timing breakdown:\n%s\n", timing.String())
+	} else {
+		output += "No requests made..."
 	}
 	Logger.Printf(output)
 }

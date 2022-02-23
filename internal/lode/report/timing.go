@@ -46,11 +46,21 @@ func (t *Timing) ResponseTransferDuration() time.Duration {
 }
 
 func (t *Timing) TotalDuration() time.Duration {
-	if t.DnsDone.IsZero() { // did not do DNS lookup (connecting to IP)
-		return t.Done.Sub(t.ConnectStart)
+	var start time.Time
+
+	if !t.DnsStart.IsZero() {
+		start = t.DnsStart
+	} else if !t.ConnectStart.IsZero() { // did not do DNS lookup (connecting to IP) )
+		start = t.ConnectStart
+	} else if !t.TlsStart.IsZero() { // reused existing connection, new TLS handshake
+		start = t.TlsStart
+	} else if !t.GotConn.IsZero() { // reused existing connection
+		start = t.GotConn
 	} else {
-		return t.Done.Sub(t.DnsStart)
+		return time.Duration(0)
 	}
+
+	return t.Done.Sub(start)
 }
 
 func (t *Timing) String() string {
