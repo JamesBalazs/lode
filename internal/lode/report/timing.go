@@ -21,11 +21,11 @@ type Timing struct {
 	Done         time.Time
 }
 
-func (t *Timing) DnsLookupDuration() time.Duration {
+func (t Timing) DnsLookupDuration() time.Duration {
 	return t.DnsDone.Sub(t.DnsStart)
 }
 
-func (t *Timing) TcpConnectDuration() time.Duration {
+func (t Timing) TcpConnectDuration() time.Duration {
 	if t.DnsDone.IsZero() { // did not do DNS lookup (connecting to IP)
 		return t.ConnectDone.Sub(t.ConnectStart)
 	} else {
@@ -33,19 +33,19 @@ func (t *Timing) TcpConnectDuration() time.Duration {
 	}
 }
 
-func (t *Timing) TlsHandshakeDuration() time.Duration {
+func (t Timing) TlsHandshakeDuration() time.Duration {
 	return t.TlsDone.Sub(t.TlsStart)
 }
 
-func (t *Timing) ServerDuration() time.Duration {
+func (t Timing) ServerDuration() time.Duration {
 	return t.FirstByte.Sub(t.GotConn)
 }
 
-func (t *Timing) ResponseTransferDuration() time.Duration {
+func (t Timing) ResponseTransferDuration() time.Duration {
 	return t.Done.Sub(t.FirstByte)
 }
 
-func (t *Timing) TotalDuration() time.Duration {
+func (t Timing) TotalDuration() time.Duration {
 	var start time.Time
 
 	if !t.DnsStart.IsZero() {
@@ -63,7 +63,7 @@ func (t *Timing) TotalDuration() time.Duration {
 	return t.Done.Sub(start)
 }
 
-func (t *Timing) String() string {
+func (t Timing) String() string {
 	return fmt.Sprintf(`<=>             DNS Lookup:        %s
    <=>          TCP Connection:    %s
       <=>       TLS Handshake:     %s

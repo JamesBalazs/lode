@@ -80,7 +80,7 @@ func (l *Lode) Run() {
 	}
 }
 
-func (l *Lode) work(trigger <-chan time.Time, stop chan struct{}, result chan ResponseTiming) {
+func (l Lode) work(trigger <-chan time.Time, stop chan struct{}, result chan ResponseTiming) {
 	ctx := context.Background()
 	for {
 		select {
@@ -100,12 +100,12 @@ func (l *Lode) work(trigger <-chan time.Time, stop chan struct{}, result chan Re
 	}
 }
 
-func (l *Lode) stop(ticker *time.Ticker, stop chan struct{}) {
+func (l Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 	ticker.Stop()
 	close(stop)
 }
 
-func (l *Lode) Report() {
+func (l Lode) Report() {
 	duration := time.Since(l.StartTime)
 	responseCount := len(l.ResponseTimings)
 	histogram := report.BuildStatusHistogram(l.ResponseTimings.Responses(), responseCount)
@@ -131,7 +131,7 @@ func (l *Lode) Report() {
 	Logger.Printf(output)
 }
 
-func (l *Lode) closeOnSigterm(channel chan ResponseTiming) {
+func (l Lode) closeOnSigterm(channel chan ResponseTiming) {
 	sigterm := make(chan os.Signal)
 	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
 	go func() {

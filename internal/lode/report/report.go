@@ -32,7 +32,7 @@ func (s *StatusHistogram) Add(statusCode int) {
 	s.Data[statusCode]++
 }
 
-func (s *StatusHistogram) String() (string string) {
+func (s StatusHistogram) String() (string string) {
 	sort.Ints(s.keys)
 	for _, statusCode := range s.keys {
 		statusCount := s.Data[statusCode]
@@ -63,7 +63,7 @@ func BuildLatencyPercentiles(timings []Timing) (histogram LatencyPercentiles) {
 	return
 }
 
-func (t *LatencyPercentiles) String() (string string) {
+func (t LatencyPercentiles) String() (string string) {
 	sort.Float64s(latencyPercentiles)
 	for _, percentile := range latencyPercentiles {
 		string = string + fmt.Sprintf("%dth: %dms\n", int(percentile), t.Data[int(percentile)])
