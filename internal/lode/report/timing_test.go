@@ -48,7 +48,7 @@ func TestTiming_TotalDuration(t *testing.T) {
 	assert.Equal(t, 62*time.Millisecond, timing.TotalDuration())
 
 	withoutDnsLookup := timing
-	withoutDnsLookup.DnsDone = time.Time{} // did not do DNS lookup
+	withoutDnsLookup.DnsStart = time.Time{} // did not do DNS lookup
 	assert.Equal(t, 56*time.Millisecond, withoutDnsLookup.TotalDuration())
 }
 
