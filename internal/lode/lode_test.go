@@ -22,7 +22,7 @@ var params = Params{
 	Concurrency: 1,
 	MaxRequests: 1,
 	Delay:       time.Second,
-	Timeout:     0,
+	Timeout:     time.Second,
 	MaxTime:     0,
 	Headers:     nil,
 }
@@ -178,4 +178,3 @@ func TestLode_ReportNoRequests(t *testing.T) {
 
 	logMock.AssertExpectations(t)
 }
-

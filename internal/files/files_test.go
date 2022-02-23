@@ -9,9 +9,10 @@ import (
 
 func TestReaderFromFileOrString(t *testing.T) {
 	assert := assert.New(t)
-	oldOpen := open
+	oldOpen := Open
+	defer func() { Open = oldOpen }()
 	expectedReader := strings.NewReader("Some body from file")
-	open = func(name string) io.Reader {
+	Open = func(name string) io.Reader {
 		return expectedReader
 	}
 
@@ -25,6 +26,4 @@ func TestReaderFromFileOrString(t *testing.T) {
 	reader = ReaderFromFileOrString("", expectedBody)
 
 	assert.Equal(expectedReader, reader)
-
-	open = oldOpen
 }

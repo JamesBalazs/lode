@@ -33,9 +33,13 @@ type Lode struct {
 }
 
 func New(params Params) *Lode {
+	if params.Timeout == 0 {
+		params.Timeout = 5 * time.Second
+	}
 	if params.Freq != 0 {
 		params.Delay = time.Second / time.Duration(params.Freq)
 	}
+	params.Validate()
 
 	body := files.ReaderFromFileOrString(params.File, params.Body)
 	req, err := NewRequest(params.Method, params.Url, body)

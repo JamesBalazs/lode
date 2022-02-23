@@ -1,0 +1,14 @@
+tests:
+  - url: https://www.google.co.uk
+    method: GET
+    concurrency: 4
+    freq: 10
+    maxrequests: 20
+  - url: https://abc.xyz/
+    method: GET
+    concurrency: 2
+    delay: 0.5s
+    maxrequests: 4
+    headers:
+      - SomeHeader=someValue
+      - OtherHeader=otherValue
