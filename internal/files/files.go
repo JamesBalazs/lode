@@ -2,12 +2,15 @@ package files
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 )
 
-var open = func(name string) (reader io.Reader) {
+var ReadFile = ioutil.ReadFile
+
+var Open = func(name string) (reader io.Reader) {
 	var err error
 	reader, err = os.Open(name)
 	if err != nil {
@@ -18,7 +21,7 @@ var open = func(name string) (reader io.Reader) {
 
 func ReaderFromFileOrString(file string, body string) (reader io.Reader) {
 	if len(file) > 0 {
-		reader = open(file)
+		reader = Open(file)
 	} else {
 		reader = strings.NewReader(body)
 	}

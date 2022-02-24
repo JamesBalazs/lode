@@ -23,36 +23,46 @@ package cmd
 
 import (
 	"github.com/JamesBalazs/lode/internal/lode"
-	"time"
 
 	"github.com/spf13/cobra"
 )
 
-// timeCmd represents the time command
-var timeCmd = &cobra.Command{
-	Use:   "time",
-	Short: "Make a single request",
-	Long: `Sends a single request and prints a handy timing breakdown.
+var dryRun bool
 
-e.g. lode time --timeout 3s -m GET https://example.com`,
+// suiteCmd represents the suite command
+var suiteCmd = &cobra.Command{
+	Use:   "suite",
+	Short: "Run a test suite from a YAML file",
+	Long: `Run a series of predefined load tests from a YAML file, for CI/automation use.
+
+e.g. lode suite examples/suite.yaml
+
+Example YAML format:
+tests:
+  - url: https://www.google.co.uk
+    method: GET
+    concurrency: 4
+    freq: 10
+    maxrequests: 20
+  - url: https://abc.xyz/
+    method: GET
+    concurrency: 2
+    delay: 0.5s
+    maxrequests: 4
+    headers:
+      - SomeHeader=someValue
+      - OtherHeader=otherValue`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		params.Url = args[0]
-		params.Concurrency = 1
-		params.Delay = 1 * time.Second
-		params.MaxRequests = 1
-		lode := lode.New(params)
-		defer lode.Report()
-		lode.Run()
+		suite := lode.SuiteFromFile(args[0])
+		if !dryRun {
+			suite.Run()
+		}
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(timeCmd)
+	rootCmd.AddCommand(suiteCmd)
 
-	timeCmd.Flags().StringVarP(&params.Method, "method", "m", "GET", "HTTP method to use - defaults to GET")
-	timeCmd.Flags().DurationVarP(&params.Timeout, "timeout", "t", 5*time.Second, "Timeout per request, e.g. 200ms or 1s - defaults to 5s")
-	timeCmd.Flags().StringVarP(&params.Body, "body", "b", "", "POST/PUT body")
-	timeCmd.Flags().StringVarP(&params.File, "file", "F", "", "POST/PUT body filepath")
-	timeCmd.Flags().StringSliceVarP(&params.Headers, "header", "H", []string{}, "Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers")
+	suiteCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Validate YAML file without running the test suite")
 }
