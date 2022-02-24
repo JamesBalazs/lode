@@ -117,7 +117,7 @@ func (l Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 	close(stop)
 }
 
-func (l Lode) Report() {
+func (l *Lode) Report() {
 	duration := time.Since(l.StartTime)
 	responseCount := len(l.ResponseTimings)
 	histogram := report.BuildStatusHistogram(l.ResponseTimings.Responses(), responseCount)
