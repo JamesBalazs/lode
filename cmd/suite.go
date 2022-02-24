@@ -27,6 +27,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var dryRun bool
+
 // suiteCmd represents the suite command
 var suiteCmd = &cobra.Command{
 	Use:   "suite",
@@ -53,10 +55,14 @@ tests:
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		suite := lode.SuiteFromFile(args[0])
-		suite.Run()
+		if !dryRun {
+			suite.Run()
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(suiteCmd)
+
+	suiteCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Validate YAML file without running the test suite")
 }
