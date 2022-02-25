@@ -1,6 +1,6 @@
 # Lode
 
-[![Coverage Status](https://coveralls.io/repos/github/JamesBalazs/lode/badge.svg?branch=main&t=LIyVhQ)](https://coveralls.io/github/JamesBalazs/lode?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/JamesBalazs/lode/badge.svg?branch=main&t=LIyVhQ&service=github)](https://coveralls.io/github/JamesBalazs/lode?branch=main)
 [![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
 [![macOS](https://svgshare.com/i/ZjP.svg)](https://svgshare.com/i/ZjP.svg)
 [![Windows](https://svgshare.com/i/ZhY.svg)](https://svgshare.com/i/ZhY.svg)
