@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# Accepts 2 arguments - tagname and tag message
-
-git tag -a "$1" -m "$2"
-git push origin "$1"
