@@ -2,9 +2,9 @@ package lode
 
 import (
 	"context"
-	"fmt"
 	"github.com/JamesBalazs/lode/internal/files"
 	"github.com/JamesBalazs/lode/internal/lode/report"
+	"github.com/JamesBalazs/lode/internal/types"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -15,20 +15,21 @@ import (
 	"time"
 )
 
-var Logger LoggerInt = log.New(os.Stdout, "", 0)
+var Logger types.LoggerInt = log.New(os.Stdout, "", 0)
 var NewRequest = http.NewRequest
-var NewClient = func(timeout time.Duration) HttpClientInt {
+var NewClient = func(timeout time.Duration) types.HttpClientInt {
 	return &http.Client{Timeout: timeout}
 }
 
 type Lode struct {
 	TargetDelay     time.Duration
-	Client          HttpClientInt
+	Client          types.HttpClientInt
 	Request         *http.Request
 	Concurrency     int
 	MaxRequests     int
 	MaxTime         time.Duration
 	StartTime       time.Time
+	FinishTime      time.Time
 	ResponseTimings ResponseTimings
 }
 
@@ -69,6 +70,7 @@ func (l *Lode) Run() {
 	stop := make(chan struct{})
 	defer l.stop(ticker, stop)
 	l.StartTime = time.Now()
+	defer l.setFinishTime()
 
 	result := make(chan ResponseTiming, 1024)
 	l.closeOnSigterm(result)
@@ -118,28 +120,8 @@ func (l Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 }
 
 func (l *Lode) Report() {
-	duration := time.Since(l.StartTime)
-	responseCount := len(l.ResponseTimings)
-	histogram := report.BuildStatusHistogram(l.ResponseTimings.Responses(), responseCount)
-	latencies := report.BuildLatencyPercentiles(l.ResponseTimings.Timings())
-	requestRate := float64(responseCount) / float64(duration.Seconds())
-
-	var output string
-	output += fmt.Sprintf("Target: %s %s\n", l.Request.Method, l.Request.URL)
-	output += fmt.Sprintf("Concurrency: %d\n", l.Concurrency)
-	output += fmt.Sprintf("Requests made: %d\n", responseCount)
-	output += fmt.Sprintf("Time taken: %s\n", duration.Truncate(10*time.Millisecond))
-	output += fmt.Sprintf("Requests per second (avg): %.2f\n\n", requestRate)
-
-	if responseCount > 1 {
-		output += fmt.Sprintf("Response code breakdown:\n%s\n", histogram.String())
-		output += fmt.Sprintf("Percentile latency breakdown:\n%s\n", latencies.String())
-	} else if responseCount == 1 {
-		timing := l.ResponseTimings[0].Timing
-		output += fmt.Sprintf("Timing breakdown:\n%s\n", timing.String())
-	} else {
-		output += "No requests made..."
-	}
+	report := NewTestReport(l)
+	output := report.Output()
 	Logger.Printf(output)
 }
 
@@ -150,4 +132,8 @@ func (l Lode) closeOnSigterm(channel chan ResponseTiming) {
 		<-sigterm
 		close(channel)
 	}()
+}
+
+func (l *Lode) setFinishTime() {
+	l.FinishTime = time.Now()
 }

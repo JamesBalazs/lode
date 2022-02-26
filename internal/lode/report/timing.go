@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const timingResolution = 1 * time.Millisecond
+const TimingResolution = 1 * time.Millisecond
 
 type Timing struct {
 	DnsStart     time.Time
@@ -22,7 +22,7 @@ type Timing struct {
 }
 
 func (t Timing) DnsLookupDuration() time.Duration {
-	return t.DnsDone.Sub(t.DnsStart).Truncate(timingResolution)
+	return t.DnsDone.Sub(t.DnsStart).Truncate(TimingResolution)
 }
 
 func (t Timing) TcpConnectDuration() (result time.Duration) {
@@ -32,19 +32,19 @@ func (t Timing) TcpConnectDuration() (result time.Duration) {
 		result = t.ConnectDone.Sub(t.DnsDone)
 	}
 
-	return result.Truncate(timingResolution)
+	return result.Truncate(TimingResolution)
 }
 
 func (t Timing) TlsHandshakeDuration() time.Duration {
-	return t.TlsDone.Sub(t.TlsStart).Truncate(timingResolution)
+	return t.TlsDone.Sub(t.TlsStart).Truncate(TimingResolution)
 }
 
 func (t Timing) ServerDuration() time.Duration {
-	return t.FirstByte.Sub(t.GotConn).Truncate(timingResolution)
+	return t.FirstByte.Sub(t.GotConn).Truncate(TimingResolution)
 }
 
 func (t Timing) ResponseTransferDuration() time.Duration {
-	return t.Done.Sub(t.FirstByte).Truncate(timingResolution)
+	return t.Done.Sub(t.FirstByte).Truncate(TimingResolution)
 }
 
 func (t Timing) TotalDuration() time.Duration {
@@ -62,7 +62,7 @@ func (t Timing) TotalDuration() time.Duration {
 		return time.Duration(0)
 	}
 
-	return t.Done.Sub(start).Truncate(timingResolution)
+	return t.Done.Sub(start).Truncate(TimingResolution)
 }
 
 func (t Timing) String() string {

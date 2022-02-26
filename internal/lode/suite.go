@@ -2,13 +2,14 @@ package lode
 
 import (
 	"github.com/JamesBalazs/lode/internal/files"
+	"github.com/JamesBalazs/lode/internal/types"
 	"gopkg.in/yaml.v3"
 	"log"
 )
 
 type Suite struct {
 	Tests []Params
-	lodes []LodeInt
+	lodes []types.LodeInt
 }
 
 func SuiteFromFile(path string) Suite {

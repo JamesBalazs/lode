@@ -3,6 +3,7 @@ package lode
 import (
 	"errors"
 	"github.com/JamesBalazs/lode/internal/lode/mocks"
+	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"io"
@@ -33,7 +34,7 @@ func TestNewLode_ReturnsLode(t *testing.T) {
 	logMock := new(mocks.Log)
 	Logger = logMock
 	clientMock := new(mocks.Client)
-	NewClient = func(timeout time.Duration) HttpClientInt {
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
 		return clientMock
 	}
 	NewRequest = func(method, url string, body io.Reader) (*http.Request, error) {
@@ -60,7 +61,7 @@ func TestNewLode_ErrorCreatingRequest(t *testing.T) {
 	logMock := new(mocks.Log)
 	Logger = logMock
 	clientMock := new(mocks.Client)
-	NewClient = func(timeout time.Duration) HttpClientInt {
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
 		return clientMock
 	}
 	NewRequest = func(string, string, io.Reader) (*http.Request, error) {
@@ -96,7 +97,7 @@ func TestNewLode_SetsHeaders(t *testing.T) {
 
 func TestLode_RunDoesRequest(t *testing.T) {
 	clientMock := new(mocks.Client)
-	NewClient = func(timeout time.Duration) HttpClientInt {
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
 		return clientMock
 	}
 	response := &http.Response{}
@@ -113,7 +114,7 @@ func TestLode_RunDoesRequest(t *testing.T) {
 
 func TestLode_RunErrorDoingRequest(t *testing.T) {
 	clientMock := new(mocks.Client)
-	NewClient = func(timeout time.Duration) HttpClientInt {
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
 		return clientMock
 	}
 	clientMock.On("Do", mock.Anything).Return(&http.Response{}, errors.New("error doing request"))
