@@ -36,18 +36,18 @@ func TestResponseTimings_GetLongestDuration(t *testing.T) {
 	response := http.Response{StatusCode: 200}
 	responseTimings := ResponseTimings{
 		ResponseTiming{Response: response, Timing: report.Timing{
-			ConnectStart: time.Unix(0, 1),
-			Done:         time.Unix(0, 3),
+			ConnectStart: time.Unix(0, 1_000_000),
+			Done:         time.Unix(0, 3_000_000),
 		}},
 		ResponseTiming{Response: response, Timing: report.Timing{
-			ConnectStart: time.Unix(0, 5),
-			Done:         time.Unix(0, 10),
+			ConnectStart: time.Unix(0, 5_000_000),
+			Done:         time.Unix(0, 10_000_000),
 		}},
 		ResponseTiming{Response: response, Timing: report.Timing{
-			ConnectStart: time.Unix(0, 2),
-			Done:         time.Unix(0, 6),
+			ConnectStart: time.Unix(0, 2_000_000),
+			Done:         time.Unix(0, 6_000_000),
 		}},
 	}
 
-	assert.Equal(t, time.Duration(5), responseTimings.GetLongestDuration())
+	assert.Equal(t, 5*time.Millisecond, responseTimings.GetLongestDuration())
 }

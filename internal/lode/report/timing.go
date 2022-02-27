@@ -22,27 +22,29 @@ type Timing struct {
 }
 
 func (t Timing) DnsLookupDuration() time.Duration {
-	return t.DnsDone.Sub(t.DnsStart)
+	return t.DnsDone.Sub(t.DnsStart).Truncate(timingResolution)
 }
 
-func (t Timing) TcpConnectDuration() time.Duration {
+func (t Timing) TcpConnectDuration() (result time.Duration) {
 	if t.DnsDone.IsZero() { // did not do DNS lookup (connecting to IP)
-		return t.ConnectDone.Sub(t.ConnectStart)
+		result = t.ConnectDone.Sub(t.ConnectStart)
 	} else {
-		return t.ConnectDone.Sub(t.DnsDone)
+		result = t.ConnectDone.Sub(t.DnsDone)
 	}
+
+	return result.Truncate(timingResolution)
 }
 
 func (t Timing) TlsHandshakeDuration() time.Duration {
-	return t.TlsDone.Sub(t.TlsStart)
+	return t.TlsDone.Sub(t.TlsStart).Truncate(timingResolution)
 }
 
 func (t Timing) ServerDuration() time.Duration {
-	return t.FirstByte.Sub(t.GotConn)
+	return t.FirstByte.Sub(t.GotConn).Truncate(timingResolution)
 }
 
 func (t Timing) ResponseTransferDuration() time.Duration {
-	return t.Done.Sub(t.FirstByte)
+	return t.Done.Sub(t.FirstByte).Truncate(timingResolution)
 }
 
 func (t Timing) TotalDuration() time.Duration {
@@ -60,7 +62,7 @@ func (t Timing) TotalDuration() time.Duration {
 		return time.Duration(0)
 	}
 
-	return t.Done.Sub(start)
+	return t.Done.Sub(start).Truncate(timingResolution)
 }
 
 func (t Timing) String() string {
@@ -70,12 +72,12 @@ func (t Timing) String() string {
          <=>    Server:            %s
             <=> Response Transfer: %s
 <=============> Total:             %s`,
-		t.DnsLookupDuration().Truncate(timingResolution),
-		t.TcpConnectDuration().Truncate(timingResolution),
-		t.TlsHandshakeDuration().Truncate(timingResolution),
-		t.ServerDuration().Truncate(timingResolution),
-		t.ResponseTransferDuration().Truncate(timingResolution),
-		t.TotalDuration().Truncate(timingResolution))
+		t.DnsLookupDuration(),
+		t.TcpConnectDuration(),
+		t.TlsHandshakeDuration(),
+		t.ServerDuration(),
+		t.ResponseTransferDuration(),
+		t.TotalDuration())
 }
 
 func NewTrace(timing *Timing) *httptrace.ClientTrace {
