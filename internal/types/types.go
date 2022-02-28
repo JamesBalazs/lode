@@ -16,7 +16,7 @@ type Response struct {
 
 type LodeInt interface {
 	Run()
-	Report()
+	Report(interactive bool)
 }
 
 type HttpClientInt interface {

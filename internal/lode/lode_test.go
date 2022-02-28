@@ -145,7 +145,7 @@ func TestLode_ReportOneRequest(t *testing.T) {
 		return result
 	})).Return()
 
-	lode.Report()
+	lode.Report(false)
 
 	logMock.AssertExpectations(t)
 }
@@ -164,7 +164,7 @@ func TestLode_ReportMultipleRequests(t *testing.T) {
 		return result1 && result2
 	})).Return()
 
-	lode.Report()
+	lode.Report(false)
 
 	logMock.AssertExpectations(t)
 }
@@ -179,7 +179,7 @@ func TestLode_ReportNoRequests(t *testing.T) {
 		return result
 	})).Return()
 
-	lode.Report()
+	lode.Report(false)
 
 	logMock.AssertExpectations(t)
 }

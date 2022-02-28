@@ -42,7 +42,7 @@ e.g. lode time --timeout 3s -m GET https://example.com`,
 		params.Delay = 1 * time.Second
 		params.MaxRequests = 1
 		lode := lode.New(params)
-		defer lode.Report()
+		defer lode.Report(false)
 		lode.Run()
 	},
 }

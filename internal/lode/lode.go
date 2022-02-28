@@ -6,6 +6,7 @@ import (
 	"github.com/JamesBalazs/lode/internal/lode/report"
 	"github.com/JamesBalazs/lode/internal/types"
 	"io"
+	"github.com/manifoldco/promptui"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -116,10 +117,37 @@ func (l Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 	close(stop)
 }
 
-func (l *Lode) Report() {
+func (l *Lode) Report(interactive bool) {
 	report := NewTestReport(l)
 	output := report.Output()
-	Logger.Printf(output)
+
+	if interactive {
+		output += "Requests:\n"
+		Logger.Printf(output)
+
+		templates := &promptui.SelectTemplates{
+			Label:    "{{ . }}?",
+			Active:   "\U0000276F {{ .Response.Status | cyan }} (Duration {{ .Timing.TotalDuration | red }})",
+			Inactive: "  {{ .Response.Status | cyan }} (Duration {{ .Timing.TotalDuration | red }})",
+			Details: `
+--------- Request details ----------
+{{ "Status:" | faint }}	{{ .Response.Status }}
+{{ "Code:" | faint }}	{{ .Response.StatusCode }}
+{{ "Timing breakdown:" | faint }}
+{{ .Timing.String }}`,
+		}
+
+		prompt := promptui.Select{
+			Label:     output,
+			Items:     l.ResponseTimings,
+			Templates: templates,
+			Size:      4,
+		}
+
+		prompt.Run()
+	} else {
+		Logger.Printf(output)
+	}
 }
 
 func (l Lode) closeOnSigterm(channel chan ResponseTiming) {
