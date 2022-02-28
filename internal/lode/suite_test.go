@@ -3,6 +3,7 @@ package lode
 import (
 	"github.com/JamesBalazs/lode/internal/files"
 	"github.com/JamesBalazs/lode/internal/lode/mocks"
+	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"strings"
@@ -44,7 +45,7 @@ func TestSuite_Run(t *testing.T) {
 	lode1 := &mocks.Lode{}
 	lode2 := &mocks.Lode{}
 	suite := Suite{
-		lodes: []LodeInt{
+		lodes: []types.LodeInt{
 			lode1,
 			lode2,
 		},
