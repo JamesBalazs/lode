@@ -5,6 +5,7 @@ import (
 	"github.com/JamesBalazs/lode/internal/files"
 	"github.com/JamesBalazs/lode/internal/lode/report"
 	"github.com/JamesBalazs/lode/internal/types"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -99,15 +100,11 @@ func (l Lode) work(trigger <-chan time.Time, stop chan struct{}, result chan Res
 	for {
 		select {
 		case <-trigger:
-			timing := report.Timing{}
-			trace := report.NewTrace(&timing)
-			request := l.Request.WithContext(httptrace.WithClientTrace(ctx, trace))
-			response, err := l.Client.Do(request)
-			timing.Done = time.Now()
-			if err != nil {
-				Logger.Panicf("Error during request: %s", err.Error())
+			response, timing := l.makeAndTimeRequest(ctx)
+			result <- ResponseTiming{
+				Response: response,
+				Timing:   timing,
 			}
-			result <- ResponseTiming{Response: *response, Timing: timing}
 		case <-stop:
 			return
 		}
@@ -136,4 +133,32 @@ func (l Lode) closeOnSigterm(channel chan ResponseTiming) {
 
 func (l *Lode) setFinishTime() {
 	l.FinishTime = time.Now()
+}
+
+func (l Lode) makeAndTimeRequest(ctx context.Context) (result *types.Response, timing *report.Timing) {
+	var err error
+	var response *http.Response
+	timing = &report.Timing{}
+	trace := report.NewTrace(timing)
+	request := l.Request.WithContext(httptrace.WithClientTrace(ctx, trace))
+	response, err = l.Client.Do(request)
+	timing.Done = time.Now()
+	if err != nil {
+		Logger.Panicf("Error during request: %s", err.Error())
+	}
+	var body []byte
+	if response.ContentLength > 0 {
+		body, err = io.ReadAll(response.Body)
+		if err != nil {
+			Logger.Panicf("Error reading body: %s", err.Error())
+		}
+		response.Body.Close()
+	}
+	return &types.Response{
+		Status:        response.Status,
+		StatusCode:    response.StatusCode,
+		ContentLength: response.ContentLength,
+		Header:        response.Header,
+		Body:          string(body),
+	}, timing
 }

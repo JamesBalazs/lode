@@ -2,13 +2,10 @@ package files
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 )
-
-var ReadFile = ioutil.ReadFile
 
 var Open = func(name string) (reader io.Reader) {
 	var err error
