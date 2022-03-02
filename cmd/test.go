@@ -41,7 +41,8 @@ e.g. lode test --freq 20 https://example.com`,
 	Run: func(cmd *cobra.Command, args []string) {
 		params.Url = args[0]
 		lode := lode.New(params)
-		defer lode.Report(interactive)
+		lode.Interactive = interactive
+		defer lode.Report()
 		lode.Run()
 	},
 }

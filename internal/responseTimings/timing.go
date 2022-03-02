@@ -1,4 +1,4 @@
-package report
+package responseTimings
 
 import (
 	"crypto/tls"

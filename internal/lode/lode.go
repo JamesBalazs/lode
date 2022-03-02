@@ -3,10 +3,9 @@ package lode
 import (
 	"context"
 	"github.com/JamesBalazs/lode/internal/files"
-	"github.com/JamesBalazs/lode/internal/lode/report"
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
 	"io"
-	"github.com/manifoldco/promptui"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -32,7 +31,8 @@ type Lode struct {
 	MaxTime         time.Duration
 	StartTime       time.Time
 	FinishTime      time.Time
-	ResponseTimings ResponseTimings
+	ResponseTimings responseTimings.ResponseTimings
+	Interactive     bool
 }
 
 func New(params Params) *Lode {
@@ -74,7 +74,7 @@ func (l *Lode) Run() {
 	l.StartTime = time.Now()
 	defer l.setFinishTime()
 
-	result := make(chan ResponseTiming, 1024)
+	result := make(chan responseTimings.ResponseTiming, 1024)
 	l.closeOnSigterm(result)
 
 	for i := 0; i < l.Concurrency; i++ {
@@ -96,13 +96,13 @@ func (l *Lode) Run() {
 	}
 }
 
-func (l Lode) work(trigger <-chan time.Time, stop chan struct{}, result chan ResponseTiming) {
+func (l Lode) work(trigger <-chan time.Time, stop chan struct{}, result chan responseTimings.ResponseTiming) {
 	ctx := context.Background()
 	for {
 		select {
 		case <-trigger:
 			response, timing := l.makeAndTimeRequest(ctx)
-			result <- ResponseTiming{
+			result <- responseTimings.ResponseTiming{
 				Response: response,
 				Timing:   timing,
 			}
@@ -117,40 +117,24 @@ func (l Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 	close(stop)
 }
 
-func (l *Lode) Report(interactive bool) {
+func (l *Lode) Report() {
 	report := NewTestReport(l)
 	output := report.Output()
 
-	if interactive {
+	if l.Interactive {
 		output += "Requests:\n"
 		Logger.Printf(output)
-
-		templates := &promptui.SelectTemplates{
-			Label:    "{{ . }}?",
-			Active:   "\U0000276F {{ .Response.Status | cyan }} (Duration {{ .Timing.TotalDuration | red }})",
-			Inactive: "  {{ .Response.Status | cyan }} (Duration {{ .Timing.TotalDuration | red }})",
-			Details: `
---------- Request details ----------
-{{ "Status:" | faint }}	{{ .Response.Status }}
-{{ "Code:" | faint }}	{{ .Response.StatusCode }}
-{{ "Timing breakdown:" | faint }}
-{{ .Timing.String }}`,
+		prompt := newInteractivePrompt(output, l.ResponseTimings)
+		_, _, err := prompt.Run()
+		if err != nil {
+			Logger.Panicln(err.Error())
 		}
-
-		prompt := promptui.Select{
-			Label:     output,
-			Items:     l.ResponseTimings,
-			Templates: templates,
-			Size:      4,
-		}
-
-		prompt.Run()
 	} else {
 		Logger.Printf(output)
 	}
 }
 
-func (l Lode) closeOnSigterm(channel chan ResponseTiming) {
+func (l Lode) closeOnSigterm(channel chan responseTimings.ResponseTiming) {
 	sigterm := make(chan os.Signal)
 	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -163,30 +147,35 @@ func (l *Lode) setFinishTime() {
 	l.FinishTime = time.Now()
 }
 
-func (l Lode) makeAndTimeRequest(ctx context.Context) (result *types.Response, timing *report.Timing) {
+func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.Response, timing *responseTimings.Timing) {
 	var err error
 	var response *http.Response
-	timing = &report.Timing{}
-	trace := report.NewTrace(timing)
+	timing = &responseTimings.Timing{}
+	trace := responseTimings.NewTrace(timing)
 	request := l.Request.WithContext(httptrace.WithClientTrace(ctx, trace))
 	response, err = l.Client.Do(request)
 	timing.Done = time.Now()
 	if err != nil {
 		Logger.Panicf("Error during request: %s", err.Error())
 	}
-	var body []byte
-	if response.ContentLength > 0 {
+
+	result = &responseTimings.Response{
+		Status:        response.Status,
+		StatusCode:    response.StatusCode,
+		ContentLength: response.ContentLength,
+	}
+
+	if l.Interactive {
+		var body []byte
 		body, err = io.ReadAll(response.Body)
 		if err != nil {
 			Logger.Panicf("Error reading body: %s", err.Error())
 		}
 		response.Body.Close()
+
+		result.Header = responseTimings.Header{HttpHeader: response.Header}
+		result.Body = string(body)
 	}
-	return &types.Response{
-		Status:        response.Status,
-		StatusCode:    response.StatusCode,
-		ContentLength: response.ContentLength,
-		Header:        response.Header,
-		Body:          string(body),
-	}, timing
+
+	return
 }

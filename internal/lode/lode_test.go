@@ -3,7 +3,7 @@ package lode
 import (
 	"errors"
 	"github.com/JamesBalazs/lode/internal/lode/mocks"
-	"github.com/JamesBalazs/lode/internal/lode/report"
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -49,7 +49,7 @@ func TestNewLode_ReturnsLode(t *testing.T) {
 		MaxRequests:     1,
 		MaxTime:         0,
 		StartTime:       time.Time{},
-		ResponseTimings: ResponseTimings(nil),
+		ResponseTimings: responseTimings.ResponseTimings(nil),
 	}
 
 	lode := New(params)
@@ -68,7 +68,7 @@ func TestNewLode_ErrorCreatingRequest(t *testing.T) {
 	NewRequest = func(string, string, io.Reader) (*http.Request, error) {
 		return nil, errors.New("could not create request")
 	}
-	logMock.On("Panicf", "Error creating request: %s", "could not create request")
+	logMock.On("Panicf", "Error creating request: %s", "could not create request").Once()
 
 	lode := New(params)
 
@@ -105,7 +105,7 @@ func TestLode_RunDoesRequest(t *testing.T) {
 		ContentLength: 3,
 		Body:          io.NopCloser(strings.NewReader("abc")),
 	}
-	clientMock.On("Do", mock.Anything).Return(response, nil)
+	clientMock.On("Do", mock.Anything).Return(response, nil).Once()
 	logMock := new(mocks.Log)
 	Logger = logMock
 
@@ -116,6 +116,33 @@ func TestLode_RunDoesRequest(t *testing.T) {
 	logMock.AssertExpectations(t)
 }
 
+func TestLode_RunInteractiveStoresBodyAndHeaders(t *testing.T) {
+	assert := assert.New(t)
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
+		return clientMock
+	}
+	body := "someBody"
+	header := http.Header{"Set-Cookie": {`abc="def"`}}
+	response := &http.Response{
+		ContentLength: 3,
+		Body:          io.NopCloser(strings.NewReader(body)),
+		Header:        header,
+	}
+	clientMock.On("Do", mock.Anything).Return(response, nil).Once()
+	logMock := new(mocks.Log)
+	Logger = logMock
+	lode := New(params)
+	lode.Interactive = true
+
+	lode.Run()
+
+	clientMock.AssertExpectations(t)
+	logMock.AssertExpectations(t)
+	assert.Equal(body, lode.ResponseTimings[0].Response.Body)
+	assert.Equal(responseTimings.Header{HttpHeader: header}, lode.ResponseTimings[0].Response.Header)
+}
+
 func TestLode_RunErrorDoingRequest(t *testing.T) {
 	clientMock := new(mocks.Client)
 	NewClient = func(timeout time.Duration) types.HttpClientInt {
@@ -123,7 +150,7 @@ func TestLode_RunErrorDoingRequest(t *testing.T) {
 	}
 	clientMock.On("Do", mock.Anything).Return(&http.Response{}, errors.New("error doing request"))
 	logMock := new(mocks.Log)
-	logMock.On("Panicf", "Error during request: %s", "error doing request")
+	logMock.On("Panicf", "Error during request: %s", "error doing request").Once()
 	Logger = logMock
 
 	lode := New(params)
@@ -137,15 +164,15 @@ func TestLode_ReportOneRequest(t *testing.T) {
 	logMock := new(mocks.Log)
 	Logger = logMock
 	lode := New(params)
-	lode.ResponseTimings = ResponseTimings{
-		ResponseTiming{Response: &types.Response{}},
+	lode.ResponseTimings = responseTimings.ResponseTimings{
+		responseTimings.ResponseTiming{Response: &responseTimings.Response{}},
 	}
 	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
 		result, _ := regexp.MatchString("Timing breakdown", str)
 		return result
-	})).Return()
+	})).Once()
 
-	lode.Report(false)
+	lode.Report()
 
 	logMock.AssertExpectations(t)
 }
@@ -154,17 +181,17 @@ func TestLode_ReportMultipleRequests(t *testing.T) {
 	logMock := new(mocks.Log)
 	Logger = logMock
 	lode := New(params)
-	lode.ResponseTimings = ResponseTimings{
-		ResponseTiming{Response: &types.Response{}, Timing: &report.Timing{}},
-		ResponseTiming{Response: &types.Response{}, Timing: &report.Timing{}},
+	lode.ResponseTimings = responseTimings.ResponseTimings{
+		responseTimings.ResponseTiming{Response: &responseTimings.Response{}, Timing: &responseTimings.Timing{}},
+		responseTimings.ResponseTiming{Response: &responseTimings.Response{}, Timing: &responseTimings.Timing{}},
 	}
 	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
 		result1, _ := regexp.MatchString("Response code breakdown", str)
 		result2, _ := regexp.MatchString("Percentile latency breakdown", str)
 		return result1 && result2
-	})).Return()
+	})).Once()
 
-	lode.Report(false)
+	lode.Report()
 
 	logMock.AssertExpectations(t)
 }
@@ -173,13 +200,68 @@ func TestLode_ReportNoRequests(t *testing.T) {
 	logMock := new(mocks.Log)
 	Logger = logMock
 	lode := New(params)
-	lode.ResponseTimings = ResponseTimings{}
+	lode.ResponseTimings = responseTimings.ResponseTimings{}
 	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
 		result, _ := regexp.MatchString("No requests made...", str)
 		return result
-	})).Return()
+	})).Once()
 
-	lode.Report(false)
+	lode.Report()
 
+	logMock.AssertExpectations(t)
+}
+
+func TestLode_ReportInteractive(t *testing.T) {
+	logMock := new(mocks.Log)
+	Logger = logMock
+	lode := New(params)
+	lode.Interactive = true
+	promptuiSelectMock := mocks.Select{}
+	oldNewInteractivePrompt := newInteractivePrompt
+	newInteractivePrompt = func(label string, responseTimings responseTimings.ResponseTimings) types.PromptSelectInt {
+		return &promptuiSelectMock
+	}
+	defer func() { newInteractivePrompt = oldNewInteractivePrompt }()
+	lode.ResponseTimings = responseTimings.ResponseTimings{
+		responseTimings.ResponseTiming{Response: &responseTimings.Response{}, Timing: &responseTimings.Timing{}},
+	}
+	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
+		result1, _ := regexp.MatchString("Response code breakdown", str)
+		result2, _ := regexp.MatchString("Percentile latency breakdown", str)
+		return result1 && result2
+	})).Once()
+	promptuiSelectMock.On("Run").Return(0, "", nil).Once()
+
+	lode.Report()
+
+	promptuiSelectMock.AssertExpectations(t)
+	logMock.AssertExpectations(t)
+}
+
+func TestLode_ReportInteractiveError(t *testing.T) {
+	logMock := new(mocks.Log)
+	Logger = logMock
+	lode := New(params)
+	lode.Interactive = true
+	promptuiSelectMock := mocks.Select{}
+	oldNewInteractivePrompt := newInteractivePrompt
+	newInteractivePrompt = func(label string, responseTimings responseTimings.ResponseTimings) types.PromptSelectInt {
+		return &promptuiSelectMock
+	}
+	defer func() { newInteractivePrompt = oldNewInteractivePrompt }()
+	lode.ResponseTimings = responseTimings.ResponseTimings{
+		responseTimings.ResponseTiming{Response: &responseTimings.Response{}, Timing: &responseTimings.Timing{}},
+	}
+	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
+		result1, _ := regexp.MatchString("Response code breakdown", str)
+		result2, _ := regexp.MatchString("Percentile latency breakdown", str)
+		return result1 && result2
+	})).Once()
+	promptuiSelectMock.On("Run").Return(0, "", errors.New("promptui error")).Once()
+	logMock.On("Panicln", "promptui error").Once()
+
+	lode.Report()
+
+	promptuiSelectMock.AssertExpectations(t)
 	logMock.AssertExpectations(t)
 }

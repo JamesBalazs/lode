@@ -30,6 +30,6 @@ func SuiteFromFile(path string) Suite {
 func (s *Suite) Run() {
 	for _, lode := range s.lodes {
 		lode.Run()
-		lode.Report(false)
+		lode.Report()
 	}
 }

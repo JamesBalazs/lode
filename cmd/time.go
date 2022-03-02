@@ -42,7 +42,8 @@ e.g. lode time --timeout 3s -m GET https://example.com`,
 		params.Delay = 1 * time.Second
 		params.MaxRequests = 1
 		lode := lode.New(params)
-		defer lode.Report(false)
+		lode.Interactive = interactive
+		defer lode.Report()
 		lode.Run()
 	},
 }
@@ -55,4 +56,6 @@ func init() {
 	timeCmd.Flags().StringVarP(&params.Body, "body", "b", "", "POST/PUT body")
 	timeCmd.Flags().StringVarP(&params.File, "file", "F", "", "POST/PUT body filepath")
 	timeCmd.Flags().StringSliceVarP(&params.Headers, "header", "H", []string{}, "Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers")
+
+	timeCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive list of responses and timing data")
 }

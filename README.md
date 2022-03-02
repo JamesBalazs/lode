@@ -33,6 +33,7 @@ A summary report is printed at the end.
 | `--body` | `-b` | POST/PUT body |
 | `--file` | `-F` | POST/PUT body filepath |
 | `--header` | `-H` | Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers |
+| `--interactive` | `-i` | Use interactive mode, which presents a scrollable list of requests, and shows the timing, body, and headers, of the selected request |
 
 One of either `--delay` or `--freq` is required. If both are provided, delay will be calculated from the given frequency.
 
@@ -78,6 +79,7 @@ A breakdown of the request's timing is printed at the end.
 | `--body` | `-b` | POST/PUT body |
 | `--file` | `-F` | POST/PUT body filepath |
 | `--header` | `-H` | Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers |
+| `--interactive` | `-i` | Use interactive mode, which shows the timing, body, and headers, of the request |
 
 **Example:**
 

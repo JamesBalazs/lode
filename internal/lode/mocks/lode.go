@@ -12,6 +12,6 @@ func (l *Lode) Run() {
 	l.Called()
 }
 
-func (l *Lode) Report(bool) {
+func (l *Lode) Report() {
 	l.Called()
 }
