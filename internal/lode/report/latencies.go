@@ -12,7 +12,7 @@ type LatencyPercentiles struct {
 	Data map[int]int
 }
 
-func BuildLatencyPercentiles(timings []Timing) (histogram LatencyPercentiles) {
+func BuildLatencyPercentiles(timings []*Timing) (histogram LatencyPercentiles) {
 	histogram = LatencyPercentiles{Data: make(map[int]int)}
 	timingsCount := len(timings)
 	durations := make([]float64, timingsCount)

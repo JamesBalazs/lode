@@ -1,13 +1,13 @@
 package report
 
 import (
+	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/stretchr/testify/assert"
-	"net/http"
 	"testing"
 )
 
 func TestBuildStatusHistogram(t *testing.T) {
-	responses := []http.Response{
+	responses := []*types.Response{
 		{StatusCode: 200},
 		{StatusCode: 200},
 		{StatusCode: 200},

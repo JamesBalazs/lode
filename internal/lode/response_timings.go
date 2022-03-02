@@ -2,25 +2,25 @@ package lode
 
 import (
 	"github.com/JamesBalazs/lode/internal/lode/report"
-	"net/http"
+	"github.com/JamesBalazs/lode/internal/types"
 	"time"
 )
 
 type ResponseTiming struct {
-	Response http.Response
-	Timing   report.Timing
+	Response *types.Response
+	Timing   *report.Timing
 }
 
 type ResponseTimings []ResponseTiming
 
-func (r ResponseTimings) Responses() (responses []http.Response) {
+func (r ResponseTimings) Responses() (responses []*types.Response) {
 	for _, responseTiming := range r {
 		responses = append(responses, responseTiming.Response)
 	}
 	return
 }
 
-func (r ResponseTimings) Timings() (timings []report.Timing) {
+func (r ResponseTimings) Timings() (timings []*report.Timing) {
 	for _, responseTiming := range r {
 		timings = append(timings, responseTiming.Timing)
 	}

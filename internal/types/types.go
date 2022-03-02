@@ -6,6 +6,14 @@ import (
 	"text/template"
 )
 
+type Response struct {
+	Status        string // e.g. "200 OK"
+	StatusCode    int    // e.g. 200
+	ContentLength int64
+	Header        http.Header
+	Body          string
+}
+
 type LodeInt interface {
 	Run()
 	Report()

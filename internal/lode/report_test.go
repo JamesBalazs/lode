@@ -14,11 +14,11 @@ import (
 )
 
 var responseTiming = ResponseTiming{
-	http.Response{
+	&types.Response{
 		Status:     "200 OK",
 		StatusCode: 200,
 	},
-	report.Timing{
+	&report.Timing{
 		ConnectStart: time.Unix(0, 1_000_000),
 		Done:         time.Unix(0, 3_000_000),
 	},

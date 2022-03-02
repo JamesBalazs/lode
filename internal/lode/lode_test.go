@@ -3,6 +3,7 @@ package lode
 import (
 	"errors"
 	"github.com/JamesBalazs/lode/internal/lode/mocks"
+	"github.com/JamesBalazs/lode/internal/lode/report"
 	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -100,7 +101,10 @@ func TestLode_RunDoesRequest(t *testing.T) {
 	NewClient = func(timeout time.Duration) types.HttpClientInt {
 		return clientMock
 	}
-	response := &http.Response{}
+	response := &http.Response{
+		ContentLength: 3,
+		Body:          io.NopCloser(strings.NewReader("abc")),
+	}
 	clientMock.On("Do", mock.Anything).Return(response, nil)
 	logMock := new(mocks.Log)
 	Logger = logMock
@@ -134,7 +138,7 @@ func TestLode_ReportOneRequest(t *testing.T) {
 	Logger = logMock
 	lode := New(params)
 	lode.ResponseTimings = ResponseTimings{
-		ResponseTiming{Response: http.Response{}},
+		ResponseTiming{Response: &types.Response{}},
 	}
 	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
 		result, _ := regexp.MatchString("Timing breakdown", str)
@@ -151,8 +155,8 @@ func TestLode_ReportMultipleRequests(t *testing.T) {
 	Logger = logMock
 	lode := New(params)
 	lode.ResponseTimings = ResponseTimings{
-		ResponseTiming{Response: http.Response{}},
-		ResponseTiming{Response: http.Response{}},
+		ResponseTiming{Response: &types.Response{}, Timing: &report.Timing{}},
+		ResponseTiming{Response: &types.Response{}, Timing: &report.Timing{}},
 	}
 	logMock.On("Printf", mock.MatchedBy(func(str string) bool {
 		result1, _ := regexp.MatchString("Response code breakdown", str)
