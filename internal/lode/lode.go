@@ -23,15 +23,18 @@ var NewClient = func(timeout time.Duration) types.HttpClientInt {
 }
 
 type Lode struct {
-	TargetDelay     time.Duration
 	Client          types.HttpClientInt
 	Request         *http.Request
 	Concurrency     int
 	MaxRequests     int
+	ExitCode        int
+	TargetDelay     time.Duration
 	MaxTime         time.Duration
 	StartTime       time.Time
 	FinishTime      time.Time
 	ResponseTimings responseTimings.ResponseTimings
+	FailFast        bool
+	IgnoreFailures  bool
 	Interactive     bool
 }
 
@@ -57,12 +60,14 @@ func New(params Params) *Lode {
 	}
 
 	return &Lode{
-		TargetDelay: params.Delay,
-		Client:      NewClient(params.Timeout),
-		Request:     req,
-		Concurrency: params.Concurrency,
-		MaxRequests: params.MaxRequests,
-		MaxTime:     params.MaxTime,
+		TargetDelay:    params.Delay,
+		Client:         NewClient(params.Timeout),
+		Request:        req,
+		Concurrency:    params.Concurrency,
+		MaxRequests:    params.MaxRequests,
+		MaxTime:        params.MaxTime,
+		FailFast:       params.FailFast,
+		IgnoreFailures: params.IgnoreFailures,
 	}
 }
 
@@ -89,6 +94,10 @@ func (l *Lode) Run() {
 	for response := range result {
 		responseCount++
 		l.ResponseTimings = append(l.ResponseTimings, response)
+
+		if !l.IgnoreFailures && (response.Response.StatusCode < 100 || response.Response.StatusCode >= 400) {
+			l.ExitCode = 1
+		}
 
 		if (checkMaxRequests && responseCount >= l.MaxRequests) || (checkMaxTime && time.Now().UnixNano() >= endTime) {
 			return
@@ -157,6 +166,8 @@ func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.R
 	timing.Done = time.Now()
 	if err != nil {
 		Logger.Panicf("Error during request: %s", err.Error())
+	} else if l.FailFast && (response.StatusCode < 100 || response.StatusCode >= 400) {
+		Logger.Fatalf("Got non-success status code: %d", response.StatusCode)
 	}
 
 	result = &responseTimings.Response{
@@ -178,4 +189,10 @@ func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.R
 	}
 
 	return
+}
+
+func (l *Lode) ExitWithCode() {
+	if l.ExitCode != 0 {
+		os.Exit(l.ExitCode)
+	}
 }

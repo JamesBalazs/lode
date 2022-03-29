@@ -6,17 +6,19 @@ import (
 )
 
 type Params struct {
-	Url         string
-	Method      string
-	Body        string
-	File        string
-	Freq        int
-	Concurrency int
-	MaxRequests int
-	Delay       time.Duration
-	Timeout     time.Duration
-	MaxTime     time.Duration
-	Headers     []string
+	Url            string
+	Method         string
+	Body           string
+	File           string
+	Freq           int
+	Concurrency    int
+	MaxRequests    int
+	Delay          time.Duration
+	Timeout        time.Duration
+	MaxTime        time.Duration
+	Headers        []string
+	FailFast       bool
+	IgnoreFailures bool
 }
 
 func (p Params) Validate() {

@@ -32,4 +32,7 @@ func (s *Suite) Run() {
 		lode.Run()
 		lode.Report()
 	}
+	for _, lode := range s.lodes {
+		lode.ExitWithCode()
+	}
 }

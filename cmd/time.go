@@ -43,6 +43,7 @@ e.g. lode time --timeout 3s -m GET https://example.com`,
 		params.MaxRequests = 1
 		lode := lode.New(params)
 		lode.Interactive = interactive
+		defer lode.ExitWithCode()
 		defer lode.Report()
 		lode.Run()
 	},
@@ -58,4 +59,5 @@ func init() {
 	timeCmd.Flags().StringSliceVarP(&params.Headers, "header", "H", []string{}, "Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers")
 
 	timeCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive list of responses and timing data")
+	timeCmd.Flags().BoolVar(&params.IgnoreFailures, "ignore-failures", false, "Don't return non-zero exit code when non-success status codes are received")
 }

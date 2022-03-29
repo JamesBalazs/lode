@@ -42,6 +42,7 @@ e.g. lode test --freq 20 https://example.com`,
 		params.Url = args[0]
 		lode := lode.New(params)
 		lode.Interactive = interactive
+		defer lode.ExitWithCode()
 		defer lode.Report()
 		lode.Run()
 	},
@@ -62,5 +63,7 @@ func init() {
 	testCmd.Flags().StringVarP(&params.File, "file", "F", "", "POST/PUT body filepath")
 	testCmd.Flags().StringSliceVarP(&params.Headers, "header", "H", []string{}, "Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers")
 
+	testCmd.Flags().BoolVar(&params.FailFast, "fail-fast", false, "Abort the test immediately if a non-success status code is received")
+	testCmd.Flags().BoolVar(&params.IgnoreFailures, "ignore-failures", false, "Don't return non-zero exit code when non-success status codes are received")
 	testCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive list of responses and timing data")
 }
