@@ -150,7 +150,8 @@ tests:
 
 ## Planned Features
 - Log responses to a file
-- Better analysis for recorded response timing
+- Replay logs from file
+- Timing/response code assertions for CI use
 
 ## Releasing
 Releases are built for multiple platforms using [goreleaser](https://github.com/goreleaser/goreleaser) in GitHub Actions.
