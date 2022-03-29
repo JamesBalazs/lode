@@ -15,3 +15,7 @@ func (l *Lode) Run() {
 func (l *Lode) Report() {
 	l.Called()
 }
+
+func (l *Lode) ExitWithCode() {
+	l.Called()
+}

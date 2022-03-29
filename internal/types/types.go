@@ -9,6 +9,7 @@ import (
 type LodeInt interface {
 	Run()
 	Report()
+	ExitWithCode()
 }
 
 type HttpClientInt interface {
@@ -20,6 +21,7 @@ type LoggerInt interface {
 	Printf(string, ...interface{})
 	Panicln(...interface{})
 	Panicf(string, ...interface{})
+	Fatalf(string, ...interface{})
 }
 
 type TemplateInt interface {

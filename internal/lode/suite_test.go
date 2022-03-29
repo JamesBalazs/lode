@@ -50,10 +50,12 @@ func TestSuite_Run(t *testing.T) {
 			lode2,
 		},
 	}
-	lode1.On("Run").Return().Once()
-	lode1.On("Report").Return().Once()
-	lode2.On("Run").Return().Once()
-	lode2.On("Report").Return().Once()
+	lode1.On("Run").Once()
+	lode1.On("Report").Once()
+	lode2.On("Run").Once()
+	lode2.On("Report").Once()
+	lode1.On("ExitWithCode").Once()
+	lode2.On("ExitWithCode").Once()
 
 	suite.Run()
 

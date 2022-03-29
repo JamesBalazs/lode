@@ -28,3 +28,8 @@ func (l *Log) Panicf(str string, v ...interface{}) {
 	strings := append([]interface{}{str}, v...)
 	l.Called(strings...)
 }
+
+func (l *Log) Fatalf(str string, v ...interface{}) {
+	strings := append([]interface{}{str}, v...)
+	l.Called(strings...)
+}

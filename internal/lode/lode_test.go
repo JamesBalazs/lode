@@ -102,6 +102,7 @@ func TestLode_RunDoesRequest(t *testing.T) {
 		return clientMock
 	}
 	response := &http.Response{
+		StatusCode:    200,
 		ContentLength: 3,
 		Body:          io.NopCloser(strings.NewReader("abc")),
 	}
@@ -125,6 +126,7 @@ func TestLode_RunInteractiveStoresBodyAndHeaders(t *testing.T) {
 	body := "someBody"
 	header := http.Header{"Set-Cookie": {`abc="def"`}}
 	response := &http.Response{
+		StatusCode:    200,
 		ContentLength: 3,
 		Body:          io.NopCloser(strings.NewReader(body)),
 		Header:        header,
@@ -158,6 +160,78 @@ func TestLode_RunErrorDoingRequest(t *testing.T) {
 
 	logMock.AssertExpectations(t)
 	clientMock.AssertExpectations(t)
+}
+
+func TestLode_RunFailFast(t *testing.T) {
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
+		return clientMock
+	}
+	response := &http.Response{
+		StatusCode:    400,
+		ContentLength: 3,
+		Body:          io.NopCloser(strings.NewReader("abc")),
+	}
+	clientMock.On("Do", mock.Anything).Return(response, nil).Once()
+	logMock := new(mocks.Log)
+	logMock.On("Fatalf", "Got non-success status code: %d", 400).Once()
+	Logger = logMock
+
+	oldFailFast := params.FailFast
+	defer func() { params.FailFast = oldFailFast }()
+	params.FailFast = true
+	lode := New(params)
+	lode.Run()
+
+	clientMock.AssertExpectations(t)
+	logMock.AssertExpectations(t)
+}
+
+func TestLode_RunNonZeroExitCode(t *testing.T) {
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
+		return clientMock
+	}
+	response := &http.Response{
+		StatusCode:    400,
+		ContentLength: 3,
+		Body:          io.NopCloser(strings.NewReader("abc")),
+	}
+	clientMock.On("Do", mock.Anything).Return(response, nil).Once()
+	logMock := new(mocks.Log)
+	Logger = logMock
+
+	lode := New(params)
+	lode.Run()
+
+	clientMock.AssertExpectations(t)
+	logMock.AssertExpectations(t)
+	assert.Equal(t, 1, lode.ExitCode)
+}
+
+func TestLode_RunIgnoreFailures(t *testing.T) {
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
+		return clientMock
+	}
+	response := &http.Response{
+		StatusCode:    400,
+		ContentLength: 3,
+		Body:          io.NopCloser(strings.NewReader("abc")),
+	}
+	clientMock.On("Do", mock.Anything).Return(response, nil).Once()
+	logMock := new(mocks.Log)
+	Logger = logMock
+
+	oldIgnoreFailures := params.IgnoreFailures
+	defer func() { params.IgnoreFailures = oldIgnoreFailures }()
+	params.IgnoreFailures = true
+	lode := New(params)
+	lode.Run()
+
+	clientMock.AssertExpectations(t)
+	logMock.AssertExpectations(t)
+	assert.Equal(t, 0, lode.ExitCode)
 }
 
 func TestLode_ReportOneRequest(t *testing.T) {
