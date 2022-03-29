@@ -3,7 +3,7 @@ package lode
 import (
 	"errors"
 	"github.com/JamesBalazs/lode/internal/lode/mocks"
-	"github.com/JamesBalazs/lode/internal/lode/report"
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,12 +13,12 @@ import (
 	"time"
 )
 
-var responseTiming = ResponseTiming{
-	&types.Response{
+var responseTiming = responseTimings.ResponseTiming{
+	Response: &responseTimings.Response{
 		Status:     "200 OK",
 		StatusCode: 200,
 	},
-	&report.Timing{
+	Timing: &responseTimings.Timing{
 		ConnectStart: time.Unix(0, 1_000_000),
 		Done:         time.Unix(0, 3_000_000),
 	},
@@ -29,7 +29,7 @@ func TestNewTestReport(t *testing.T) {
 	logMock := new(mocks.Log)
 	Logger = logMock
 	clientMock := new(mocks.Client)
-	responseTimings := ResponseTimings{
+	responseTimings := responseTimings.ResponseTimings{
 		responseTiming,
 		responseTiming,
 	}
@@ -60,9 +60,9 @@ func TestNewTestReport(t *testing.T) {
 
 func TestTestReport_FirstResponse(t *testing.T) {
 	tr := TestReport{
-		ResponseTimings: ResponseTimings{
+		ResponseTimings: responseTimings.ResponseTimings{
 			responseTiming,
-			ResponseTiming{},
+			responseTimings.ResponseTiming{},
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestTestReport_Output(t *testing.T) {
 		Duration:      10 * time.Second,
 		ResponseCount: 2,
 		RequestRate:   0.2,
-		ResponseTimings: ResponseTimings{
+		ResponseTimings: responseTimings.ResponseTimings{
 			responseTiming,
 		},
 	}

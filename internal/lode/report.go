@@ -1,13 +1,40 @@
 package lode
 
 import (
-	"github.com/JamesBalazs/lode/internal/lode/report"
+	report2 "github.com/JamesBalazs/lode/internal/report"
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
+	"github.com/manifoldco/promptui"
 	"math"
 	"strings"
 	"text/template"
 	"time"
 )
+
+var reportTemplate = &promptui.SelectTemplates{
+	Label:    "{{ . }}?",
+	Active:   "\U0000276F {{ .Response.Status | cyan }} (Duration {{ .Timing.TotalDuration | red }})",
+	Inactive: "  {{ .Response.Status | cyan }} (Duration {{ .Timing.TotalDuration | red }})",
+	Details: `
+Request details:
+{{ "Status:" | faint }}	{{ .Response.Status }}
+{{ "Code:" | faint }}	{{ .Response.StatusCode }}
+{{ "Timing breakdown:" | faint }}
+{{ .Timing.String }}
+
+Request headers:
+{{ .Response.Header }}
+Request body:
+{{ .Response.Body }}`,
+}
+
+var newInteractivePrompt = func(label string, responseTimings responseTimings.ResponseTimings) types.PromptSelectInt {
+	return &promptui.Select{
+		Label:     label,
+		Items:     responseTimings,
+		Templates: reportTemplate,
+	}
+}
 
 var newTemplate = func(name string) types.TemplateInt {
 	return template.New(name)
@@ -19,11 +46,12 @@ type TestReport struct {
 	Duration        time.Duration
 	ResponseCount   int
 	RequestRate     float64
-	ResponseTimings ResponseTimings
+	ResponseTimings responseTimings.ResponseTimings
+	Interactive     bool
 }
 
 func NewTestReport(lode *Lode) TestReport {
-	duration := lode.FinishTime.Sub(lode.StartTime).Truncate(report.TimingResolution)
+	duration := lode.FinishTime.Sub(lode.StartTime).Truncate(responseTimings.TimingResolution)
 	responseCount := len(lode.ResponseTimings)
 
 	return TestReport{
@@ -33,18 +61,19 @@ func NewTestReport(lode *Lode) TestReport {
 		ResponseCount:   responseCount,
 		RequestRate:     math.Round((float64(responseCount)/duration.Seconds())*100) / 100,
 		ResponseTimings: lode.ResponseTimings,
+		Interactive:     lode.Interactive,
 	}
 }
 
-func (t TestReport) StatusHistogram() report.StatusHistogram {
-	return report.BuildStatusHistogram(t.ResponseTimings.Responses(), t.ResponseCount)
+func (t TestReport) StatusHistogram() report2.StatusHistogram {
+	return report2.BuildStatusHistogram(t.ResponseTimings.Responses(), t.ResponseCount)
 }
 
-func (t TestReport) LatencyPercentiles() report.LatencyPercentiles {
-	return report.BuildLatencyPercentiles(t.ResponseTimings.Timings())
+func (t TestReport) LatencyPercentiles() report2.LatencyPercentiles {
+	return report2.BuildLatencyPercentiles(t.ResponseTimings.Timings())
 }
 
-func (t TestReport) FirstResponse() ResponseTiming {
+func (t TestReport) FirstResponse() responseTimings.ResponseTiming {
 	return t.ResponseTimings[0]
 }
 
@@ -62,7 +91,7 @@ Concurrency: {{ .Concurrency }}
 Requests made: {{ .ResponseCount }}
 Time taken: {{ .Duration }}
 Requests per second (avg): {{ .RequestRate }}
-{{ if .MultipleResponses }}
+{{ if or .MultipleResponses .Interactive }}
 Response code breakdown:
 {{ .StatusHistogram }}
 Percentile latency breakdown:

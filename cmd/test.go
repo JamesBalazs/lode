@@ -27,6 +27,8 @@ import (
 	"time"
 )
 
+var interactive bool
+
 // testCmd represents the test command
 var testCmd = &cobra.Command{
 	Use:   "test [url]",
@@ -39,6 +41,7 @@ e.g. lode test --freq 20 https://example.com`,
 	Run: func(cmd *cobra.Command, args []string) {
 		params.Url = args[0]
 		lode := lode.New(params)
+		lode.Interactive = interactive
 		defer lode.Report()
 		lode.Run()
 	},
@@ -58,4 +61,6 @@ func init() {
 	testCmd.Flags().StringVarP(&params.Body, "body", "b", "", "POST/PUT body")
 	testCmd.Flags().StringVarP(&params.File, "file", "F", "", "POST/PUT body filepath")
 	testCmd.Flags().StringSliceVarP(&params.Headers, "header", "H", []string{}, "Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers")
+
+	testCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive list of responses and timing data")
 }

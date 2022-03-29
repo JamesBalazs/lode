@@ -1,13 +1,14 @@
 package report
 
 import (
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestBuildLatencyPercentiles(t *testing.T) {
-	timings := []*Timing{
+	timings := []*responseTimings.Timing{
 		{ConnectStart: time.Unix(0, 0), Done: time.Unix(0, 700_000_000)},
 		{ConnectStart: time.Unix(0, 0), Done: time.Unix(0, 300_000_000)},
 		{ConnectStart: time.Unix(0, 0), Done: time.Unix(0, 500_000_000)},

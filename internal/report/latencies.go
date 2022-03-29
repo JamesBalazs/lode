@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/montanaflynn/stats"
 	"sort"
 )
@@ -12,7 +13,7 @@ type LatencyPercentiles struct {
 	Data map[int]int
 }
 
-func BuildLatencyPercentiles(timings []*Timing) (histogram LatencyPercentiles) {
+func BuildLatencyPercentiles(timings []*responseTimings.Timing) (histogram LatencyPercentiles) {
 	histogram = LatencyPercentiles{Data: make(map[int]int)}
 	timingsCount := len(timings)
 	durations := make([]float64, timingsCount)

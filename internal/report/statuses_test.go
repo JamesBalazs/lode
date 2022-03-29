@@ -1,13 +1,13 @@
 package report
 
 import (
-	"github.com/JamesBalazs/lode/internal/types"
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestBuildStatusHistogram(t *testing.T) {
-	responses := []*types.Response{
+	responses := []*responseTimings.Response{
 		{StatusCode: 200},
 		{StatusCode: 200},
 		{StatusCode: 200},

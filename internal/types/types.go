@@ -6,14 +6,6 @@ import (
 	"text/template"
 )
 
-type Response struct {
-	Status        string // e.g. "200 OK"
-	StatusCode    int    // e.g. 200
-	ContentLength int64
-	Header        http.Header
-	Body          string
-}
-
 type LodeInt interface {
 	Run()
 	Report()
@@ -33,4 +25,8 @@ type LoggerInt interface {
 type TemplateInt interface {
 	Parse(text string) (*template.Template, error)
 	Execute(wr io.Writer, data interface{}) error
+}
+
+type PromptSelectInt interface {
+	Run() (int, string, error)
 }

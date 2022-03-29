@@ -2,7 +2,7 @@ package report
 
 import (
 	"fmt"
-	"github.com/JamesBalazs/lode/internal/types"
+	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"sort"
 	"strings"
 )
@@ -13,7 +13,7 @@ type StatusHistogram struct {
 	keys       []int
 }
 
-func BuildStatusHistogram(responses []*types.Response, totalResponses int) (histogram StatusHistogram) {
+func BuildStatusHistogram(responses []*responseTimings.Response, totalResponses int) (histogram StatusHistogram) {
 	histogram = StatusHistogram{Data: make(map[int]int)}
 	histogram.TotalCount = totalResponses
 	for _, response := range responses {
