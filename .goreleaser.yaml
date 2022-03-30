@@ -25,6 +25,12 @@ archives:
       windows: Windows
       386: i386
       amd64: x86_64
+brews:
+- name: lode
+  homepage: https://github.com/JamesBalazs/homebrew-tools
+  tap:
+    owner: JamesBalazs
+    name: homebrew-tools
 checksum:
   name_template: 'checksums.txt'
 snapshot:
