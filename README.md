@@ -15,6 +15,11 @@ Versatile load testing CLI tool written in Go, with configurable workflows to fa
 - Configurable with workflows for CI/automation use
 - Open source
 
+## Installation
+Check out our [installation instructions](https://github.com/JamesBalazs/lode/wiki/Installation) for supported platforms in the Wiki.
+
+Alternatively, head to [releases](https://github.com/JamesBalazs/lode/releases), grab the version for your platform, extract the binary, and run it. 
+
 ## Usage
 ### `lode test [flags] [url]`
 Used to run a single load test against the specified URL.
