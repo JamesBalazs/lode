@@ -9,6 +9,8 @@
 
 Versatile load testing CLI tool written in Go, with configurable workflows to facilitate automated load testing in CI.
 
+![Lode CLI tool example image](https://i.imgur.com/5p0CE4F.png)
+
 **Features:**
 - Concurrent
 - Timing data for individual requests
