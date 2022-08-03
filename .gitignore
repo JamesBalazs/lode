@@ -17,3 +17,6 @@ vendor/
 # Binaries
 /lode
 dist/
+
+# IDE config
+.idea/
