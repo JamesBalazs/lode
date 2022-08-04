@@ -10,7 +10,7 @@ type Params struct {
 	Method         string
 	Body           string
 	File           string
-	Outfile        string
+	OutFile        string
 	OutFormat      string
 	Freq           int
 	Concurrency    int
@@ -44,7 +44,7 @@ func (p Params) Validate() {
 	if p.MaxRequests == 0 && p.MaxTime == 0 {
 		errors = append(errors, "maxrequests or maxtime must be provided")
 	}
-	if len(p.Outfile) == 0 && len(p.OutFormat) != 0 {
+	if len(p.OutFile) == 0 && len(p.OutFormat) != 0 {
 		errors = append(errors, "outFormat must be used with outFile")
 	}
 	if len(p.OutFormat) != 0 && p.OutFormat != "yaml" && p.OutFormat != "json" {

@@ -38,8 +38,9 @@ type Lode struct {
 	FailFast        bool
 	IgnoreFailures  bool
 	Interactive     bool
-	FileLogger      *log.Logger
-	FileMarshal     func(in interface{}) (out []byte, err error)
+	WriteFile       bool
+	FileLogger      types.LoggerInt
+	OutFormat       string
 }
 
 func New(params Params) *Lode {
@@ -64,13 +65,14 @@ func New(params Params) *Lode {
 	}
 
 	var fileLogger *log.Logger
-	if len(params.Outfile) != 0 {
-		fileLogger = newFileLogger(params.Outfile)
+	writeFile := len(params.OutFile) != 0
+	if writeFile {
+		fileLogger = newFileLogger(params.OutFile)
 	}
 
-	fileMarshal := json.Marshal
+	outFormat := "json"
 	if params.OutFormat == "yaml" {
-		fileMarshal = yaml.Marshal
+		outFormat = "yaml"
 	}
 
 	return &Lode{
@@ -83,7 +85,8 @@ func New(params Params) *Lode {
 		FailFast:       params.FailFast,
 		IgnoreFailures: params.IgnoreFailures,
 		FileLogger:     fileLogger,
-		FileMarshal:    fileMarshal,
+		OutFormat:      outFormat,
+		WriteFile:      writeFile,
 	}
 }
 
@@ -107,12 +110,14 @@ func (l *Lode) Run() {
 	checkMaxRequests := l.MaxRequests > 0
 	checkMaxTime := l.MaxTime > 0
 	responseCount := 0
+	outMarshaller := l.outMarshaller()
+
 	for response := range result {
 		responseCount++
 		l.ResponseTimings = append(l.ResponseTimings, response)
 
-		if l.FileLogger != nil {
-			marshalledResponse, err := l.FileMarshal(response)
+		if l.WriteFile {
+			marshalledResponse, err := outMarshaller(response)
 			if err != nil {
 				panic(err)
 			}
@@ -181,6 +186,13 @@ func (l *Lode) setFinishTime() {
 	l.FinishTime = time.Now()
 }
 
+func (l Lode) outMarshaller() func(v interface{}) ([]byte, error) {
+	if l.OutFormat == "yaml" {
+		return yaml.Marshal
+	}
+	return json.Marshal
+}
+
 func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.Response, timing *responseTimings.Timing) {
 	var err error
 	var response *http.Response
@@ -201,7 +213,7 @@ func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.R
 		ContentLength: response.ContentLength,
 	}
 
-	if l.Interactive || l.FileLogger != nil {
+	if l.Interactive || l.WriteFile {
 		var body []byte
 		body, err = io.ReadAll(response.Body)
 		if err != nil {

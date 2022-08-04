@@ -46,6 +46,6 @@ func init() {
 	testCmd.Flags().BoolVar(&params.IgnoreFailures, "ignore-failures", false, "Don't return non-zero exit code when non-success status codes are received")
 	testCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive list of responses and timing data")
 
-	testCmd.Flags().StringVarP(&params.Outfile, "out", "O", "", "Filepath to write requests and timing data, if provided")
+	testCmd.Flags().StringVarP(&params.OutFile, "out", "O", "", "Filepath to write requests and timing data, if provided")
 	testCmd.Flags().StringVar(&params.OutFormat, "outFormat", "json", "Format to use when writing requests to file - valid options are json and yaml")
 }
