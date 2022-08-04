@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
@@ -115,15 +116,24 @@ func TestNewLode_DefaultTimeout(t *testing.T) {
 }
 
 func TestNewLode_FileLogger(t *testing.T) {
+	oldNewFileLoggerFunc := newFileLogger
+	newFileLogger = func(path string) *log.Logger {
+		return log.New(ioutil.Discard, "", 0)
+	}
 	params.OutFile = "/tmp/outfile.txt"
 
 	lode := New(params)
 
 	assert.NotNil(t, lode.FileLogger)
 	params.OutFile = ""
+	newFileLogger = oldNewFileLoggerFunc
 }
 
 func TestNewLode_OutfileYaml(t *testing.T) {
+	oldNewFileLoggerFunc := newFileLogger
+	newFileLogger = func(path string) *log.Logger {
+		return log.New(ioutil.Discard, "", 0)
+	}
 	params.OutFile = "/tmp/outfile.txt"
 	params.OutFormat = "yaml"
 	expectedOutFormat := "yaml"
@@ -133,6 +143,7 @@ func TestNewLode_OutfileYaml(t *testing.T) {
 	assert.Equal(t, lode.OutFormat, expectedOutFormat)
 	params.OutFile = ""
 	params.OutFormat = ""
+	newFileLogger = oldNewFileLoggerFunc
 }
 
 func TestLode_RunDoesRequest(t *testing.T) {
