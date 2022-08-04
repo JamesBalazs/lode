@@ -43,6 +43,8 @@ A summary report is printed at the end.
 | `--interactive` | `-i` | Use interactive mode, which presents a scrollable list of requests, and shows the timing, body, and headers, of the selected request |
 | `--fail-fast` |  | Abort the test immediately if a non-success status code is received |
 | `--ignore-failures` |  | Don't return non-zero exit code when non-success status codes are received |
+| `--out` | `-O` | Filepath to write requests and timing data, if provided |
+| `--outFormat` |  | Format to use when writing requests to file - valid options are `json` and `yaml` |
 
 One of either `--delay` or `--freq` is required. If both are provided, delay will be calculated from the given frequency.
 
@@ -90,6 +92,8 @@ A breakdown of the request's timing is printed at the end.
 | `--header` | `-H` | Request headers, in the form X-SomeHeader=value - separate headers with commas, or repeat the flag to add multiple headers |
 | `--interactive` | `-i` | Use interactive mode, which shows the timing, body, and headers, of the request |
 | `--ignore-failures` |  | Don't return non-zero exit code when non-success status codes are received |
+| `--out` | `-O` | Filepath to write requests and timing data, if provided |
+| `--outFormat` |  | Format to use when writing requests to file - valid options are `json` and `yaml` |
 
 **Example:**
 

@@ -10,6 +10,8 @@ type Params struct {
 	Method         string
 	Body           string
 	File           string
+	OutFile        string
+	OutFormat      string
 	Freq           int
 	Concurrency    int
 	MaxRequests    int
@@ -41,6 +43,12 @@ func (p Params) Validate() {
 	}
 	if p.MaxRequests == 0 && p.MaxTime == 0 {
 		errors = append(errors, "maxrequests or maxtime must be provided")
+	}
+	if len(p.OutFile) == 0 && len(p.OutFormat) != 0 {
+		errors = append(errors, "outFormat must be used with outFile")
+	}
+	if len(p.OutFormat) != 0 && p.OutFormat != "yaml" && p.OutFormat != "json" {
+		errors = append(errors, "invalid outFormat - valid options are json and yaml")
 	}
 	if len(errors) != 0 {
 		Logger.Panicf("Invalid test suite:\n%s\n", strings.Join(errors, "\n"))

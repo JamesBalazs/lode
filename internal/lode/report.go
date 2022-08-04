@@ -5,7 +5,9 @@ import (
 	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/manifoldco/promptui"
+	"log"
 	"math"
+	"os"
 	"strings"
 	"text/template"
 	"time"
@@ -38,6 +40,14 @@ var newInteractivePrompt = func(label string, responseTimings responseTimings.Re
 
 var newTemplate = func(name string) types.TemplateInt {
 	return template.New(name)
+}
+
+var newFileLogger = func(path string) *log.Logger {
+	file, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	return log.New(file, "", 0)
 }
 
 type TestReport struct {

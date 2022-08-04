@@ -1,6 +1,7 @@
 package lode
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/JamesBalazs/lode/internal/lode/mocks"
 	"github.com/JamesBalazs/lode/internal/responseTimings"
@@ -8,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -41,6 +44,7 @@ func TestNewLode_ReturnsLode(t *testing.T) {
 	NewRequest = func(method, url string, body io.Reader) (*http.Request, error) {
 		return expectedRequest, nil
 	}
+	var nilLogger *log.Logger
 	expectedLode := &Lode{
 		TargetDelay:     params.Delay,
 		Client:          clientMock,
@@ -50,6 +54,8 @@ func TestNewLode_ReturnsLode(t *testing.T) {
 		MaxTime:         0,
 		StartTime:       time.Time{},
 		ResponseTimings: responseTimings.ResponseTimings(nil),
+		OutFormat:       "json",
+		FileLogger:      nilLogger,
 	}
 
 	lode := New(params)
@@ -74,6 +80,9 @@ func TestNewLode_ErrorCreatingRequest(t *testing.T) {
 
 	assert.Nil(lode)
 	logMock.AssertExpectations(t)
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
+		return &http.Client{Timeout: timeout}
+	}
 	NewRequest = http.NewRequest
 }
 
@@ -94,6 +103,47 @@ func TestNewLode_SetsHeaders(t *testing.T) {
 	lode := New(params)
 
 	assert.Equal(t, expectedHeader, lode.Request.Header)
+}
+
+func TestNewLode_DefaultTimeout(t *testing.T) {
+	params.Timeout = 0
+	expectedTimeout := 5 * time.Second
+
+	lode := New(params)
+	client := lode.Client.(*http.Client)
+
+	assert.Equal(t, expectedTimeout, client.Timeout)
+}
+
+func TestNewLode_FileLogger(t *testing.T) {
+	oldNewFileLoggerFunc := newFileLogger
+	newFileLogger = func(path string) *log.Logger {
+		return log.New(ioutil.Discard, "", 0)
+	}
+	params.OutFile = "/tmp/outfile.txt"
+
+	lode := New(params)
+
+	assert.NotNil(t, lode.FileLogger)
+	params.OutFile = ""
+	newFileLogger = oldNewFileLoggerFunc
+}
+
+func TestNewLode_OutfileYaml(t *testing.T) {
+	oldNewFileLoggerFunc := newFileLogger
+	newFileLogger = func(path string) *log.Logger {
+		return log.New(ioutil.Discard, "", 0)
+	}
+	params.OutFile = "/tmp/outfile.txt"
+	params.OutFormat = "yaml"
+	expectedOutFormat := "yaml"
+
+	lode := New(params)
+
+	assert.Equal(t, lode.OutFormat, expectedOutFormat)
+	params.OutFile = ""
+	params.OutFormat = ""
+	newFileLogger = oldNewFileLoggerFunc
 }
 
 func TestLode_RunDoesRequest(t *testing.T) {
@@ -232,6 +282,37 @@ func TestLode_RunIgnoreFailures(t *testing.T) {
 	clientMock.AssertExpectations(t)
 	logMock.AssertExpectations(t)
 	assert.Equal(t, 0, lode.ExitCode)
+}
+
+func TestLode_RunOutfile(t *testing.T) {
+	clientMock := new(mocks.Client)
+	NewClient = func(timeout time.Duration) types.HttpClientInt {
+		return clientMock
+	}
+	response := &http.Response{
+		StatusCode:    200,
+		ContentLength: 3,
+		Body:          io.NopCloser(strings.NewReader("abc")),
+	}
+	clientMock.On("Do", mock.Anything).Return(response, nil).Once()
+	logMock := new(mocks.Log)
+	fileMock := new(mocks.Log)
+	fileMock.On("Println", mock.MatchedBy(func(str string) bool {
+		var respTiming responseTimings.ResponseTiming
+		err := json.Unmarshal([]byte(str), &respTiming)
+		return err == nil && respTiming.Response != &responseTimings.Response{}
+	})).Return().Once()
+
+	Logger = logMock
+	lode := New(params)
+	lode.WriteFile = true
+	lode.FileLogger = fileMock
+
+	lode.Run()
+
+	clientMock.AssertExpectations(t)
+	logMock.AssertExpectations(t)
+	fileMock.AssertExpectations(t)
 }
 
 func TestLode_ReportOneRequest(t *testing.T) {

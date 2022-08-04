@@ -87,4 +87,15 @@ func TestParams_Validate(t *testing.T) {
 	logMock.AssertExpectations(t)
 	param.MaxRequests, param.MaxTime = oldParam.MaxRequests, oldParam.MaxTime
 
+	param.OutFormat = "json"
+	logMock.On("Panicf", invalidSuite, "outFormat must be used with outFile").Return().Once()
+	param.Validate()
+	logMock.AssertExpectations(t)
+	param.OutFormat = oldParam.OutFormat
+
+	param.OutFile, param.OutFormat = "/tmp/out.txt", "invalid"
+	logMock.On("Panicf", invalidSuite, "invalid outFormat - valid options are json and yaml").Return().Once()
+	param.Validate()
+	logMock.AssertExpectations(t)
+	param.OutFile, param.OutFormat = oldParam.OutFile, oldParam.OutFormat
 }
