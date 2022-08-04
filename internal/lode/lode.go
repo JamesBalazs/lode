@@ -2,9 +2,11 @@ package lode
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/JamesBalazs/lode/internal/files"
 	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
+	"gopkg.in/yaml.v3"
 	"io"
 	"log"
 	"net/http"
@@ -36,6 +38,8 @@ type Lode struct {
 	FailFast        bool
 	IgnoreFailures  bool
 	Interactive     bool
+	FileLogger      *log.Logger
+	FileMarshal     func(in interface{}) (out []byte, err error)
 }
 
 func New(params Params) *Lode {
@@ -59,6 +63,16 @@ func New(params Params) *Lode {
 		req.Header[headerParts[0]] = []string{headerParts[1]}
 	}
 
+	var fileLogger *log.Logger
+	if len(params.Outfile) != 0 {
+		fileLogger = newFileLogger(params.Outfile)
+	}
+
+	fileMarshal := json.Marshal
+	if params.OutFormat == "yaml" {
+		fileMarshal = yaml.Marshal
+	}
+
 	return &Lode{
 		TargetDelay:    params.Delay,
 		Client:         NewClient(params.Timeout),
@@ -68,6 +82,8 @@ func New(params Params) *Lode {
 		MaxTime:        params.MaxTime,
 		FailFast:       params.FailFast,
 		IgnoreFailures: params.IgnoreFailures,
+		FileLogger:     fileLogger,
+		FileMarshal:    fileMarshal,
 	}
 }
 
@@ -94,6 +110,15 @@ func (l *Lode) Run() {
 	for response := range result {
 		responseCount++
 		l.ResponseTimings = append(l.ResponseTimings, response)
+
+		if l.FileLogger != nil {
+			marshalledResponse, err := l.FileMarshal(response)
+			if err != nil {
+				panic(err)
+			}
+
+			l.FileLogger.Println(string(marshalledResponse))
+		}
 
 		if !l.IgnoreFailures && (response.Response.StatusCode < 100 || response.Response.StatusCode >= 400) {
 			l.ExitCode = 1
@@ -176,7 +201,7 @@ func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.R
 		ContentLength: response.ContentLength,
 	}
 
-	if l.Interactive {
+	if l.Interactive || l.FileLogger != nil {
 		var body []byte
 		body, err = io.ReadAll(response.Body)
 		if err != nil {

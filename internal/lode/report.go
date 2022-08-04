@@ -5,7 +5,9 @@ import (
 	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/manifoldco/promptui"
+	"log"
 	"math"
+	"os"
 	"strings"
 	"text/template"
 	"time"
@@ -117,4 +119,12 @@ No requests made...
 		return ""
 	}
 	return builder.String()
+}
+
+func newFileLogger(path string) *log.Logger {
+	file, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	return log.New(file, "", 0)
 }

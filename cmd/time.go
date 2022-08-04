@@ -39,4 +39,7 @@ func init() {
 
 	timeCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive list of responses and timing data")
 	timeCmd.Flags().BoolVar(&params.IgnoreFailures, "ignore-failures", false, "Don't return non-zero exit code when non-success status codes are received")
+
+	timeCmd.Flags().StringVarP(&params.Outfile, "out", "O", "", "Filepath to write requests and timing data, if provided")
+	timeCmd.Flags().StringVar(&params.OutFormat, "outFormat", "json", "Format to use when writing requests to file - valid options are json and yaml")
 }
