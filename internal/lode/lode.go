@@ -1,6 +1,7 @@
 package lode
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/JamesBalazs/lode/internal/files"
@@ -38,8 +39,7 @@ type Lode struct {
 	FailFast        bool
 	IgnoreFailures  bool
 	Interactive     bool
-	WriteFile       bool
-	FileLogger      types.LoggerInt
+	OutFile         string
 	OutFormat       string
 }
 
@@ -64,12 +64,6 @@ func New(params Params) *Lode {
 		req.Header[headerParts[0]] = []string{headerParts[1]}
 	}
 
-	var fileLogger *log.Logger
-	writeFile := len(params.OutFile) != 0
-	if writeFile {
-		fileLogger = newFileLogger(params.OutFile)
-	}
-
 	outFormat := "json"
 	if params.OutFormat == "yaml" {
 		outFormat = "yaml"
@@ -84,9 +78,8 @@ func New(params Params) *Lode {
 		MaxTime:        params.MaxTime,
 		FailFast:       params.FailFast,
 		IgnoreFailures: params.IgnoreFailures,
-		FileLogger:     fileLogger,
+		OutFile:        params.OutFile,
 		OutFormat:      outFormat,
-		WriteFile:      writeFile,
 	}
 }
 
@@ -110,20 +103,10 @@ func (l *Lode) Run() {
 	checkMaxRequests := l.MaxRequests > 0
 	checkMaxTime := l.MaxTime > 0
 	responseCount := 0
-	outMarshaller := l.outMarshaller()
 
 	for response := range result {
 		responseCount++
 		l.ResponseTimings = append(l.ResponseTimings, response)
-
-		if l.WriteFile {
-			marshalledResponse, err := outMarshaller(response)
-			if err != nil {
-				panic(err)
-			}
-
-			l.FileLogger.Println(string(marshalledResponse))
-		}
 
 		if !l.IgnoreFailures && (response.Response.StatusCode < 100 || response.Response.StatusCode >= 400) {
 			l.ExitCode = 1
@@ -158,12 +141,45 @@ func (l Lode) stop(ticker *time.Ticker, stop chan struct{}) {
 
 func (l *Lode) Report() {
 	report := NewTestReport(l)
-	output := report.Output()
 
-	if l.Interactive {
+	if l.WriteFile() {
+		var marshalFunc func(v any) ([]byte, error)
+		switch l.OutFormat {
+		case "json":
+			marshalFunc = func(a any) ([]byte, error) {
+				buffer := bytes.Buffer{}
+				encoder := json.NewEncoder(&buffer)
+				encoder.SetEscapeHTML(false)
+				if err := encoder.Encode(a); err != nil {
+					return nil, err
+				}
+				return buffer.Bytes(), nil
+			}
+		case "yaml":
+			marshalFunc = yaml.Marshal
+		default:
+			panic("invalid outFormat")
+		}
+
+		runData := report.ToRunData()
+		data, err := marshalFunc(runData)
+
+		file, err := os.Create(l.OutFile)
+		if err != nil {
+			panic(err)
+		}
+		file.Write(data)
+	}
+
+	RunReport(report)
+}
+
+func RunReport(report TestReport) {
+	output := report.Output()
+	if report.Interactive {
 		output += "Requests:\n"
 		Logger.Printf(output)
-		prompt := newInteractivePrompt(output, l.ResponseTimings)
+		prompt := newInteractivePrompt(output, report.ResponseTimings)
 		_, _, err := prompt.Run()
 		if err != nil {
 			Logger.Panicln(err.Error())
@@ -213,7 +229,7 @@ func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.R
 		ContentLength: response.ContentLength,
 	}
 
-	if l.Interactive || l.WriteFile {
+	if l.Interactive || l.WriteFile() {
 		var body []byte
 		body, err = io.ReadAll(response.Body)
 		if err != nil {
@@ -232,4 +248,8 @@ func (l *Lode) ExitWithCode() {
 	if l.ExitCode != 0 {
 		os.Exit(l.ExitCode)
 	}
+}
+
+func (l Lode) WriteFile() bool {
+	return len(l.OutFile) != 0
 }
