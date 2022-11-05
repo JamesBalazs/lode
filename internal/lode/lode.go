@@ -174,7 +174,7 @@ func (l *Lode) Report() {
 }
 
 func (l Lode) closeOnSigterm(channel chan responseTimings.ResponseTiming) {
-	sigterm := make(chan os.Signal)
+	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigterm
