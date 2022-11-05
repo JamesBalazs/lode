@@ -15,12 +15,12 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.16.x
+          go-version: 1.19.x
 
       - name: Run linter
         uses: golangci/golangci-lint-action@v3.3.0
         with:
-          version: v1.29
+          version: latest
 
   test:
     strategy:
@@ -34,7 +34,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.16.x
+        go-version: 1.19.x
 
     - name: Test
       run: go test -v -covermode=count ./...
@@ -49,7 +49,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.16.x
+        go-version: 1.19.x
 
     - name: Calc coverage
       run: |
