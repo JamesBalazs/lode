@@ -1,13 +1,11 @@
 package lode
 
 import (
-	report2 "github.com/JamesBalazs/lode/internal/report"
+	"github.com/JamesBalazs/lode/internal/report"
 	"github.com/JamesBalazs/lode/internal/responseTimings"
 	"github.com/JamesBalazs/lode/internal/types"
 	"github.com/manifoldco/promptui"
-	"log"
 	"math"
-	"os"
 	"strings"
 	"text/template"
 	"time"
@@ -42,14 +40,6 @@ var newTemplate = func(name string) types.TemplateInt {
 	return template.New(name)
 }
 
-var newFileLogger = func(path string) *log.Logger {
-	file, err := os.Create(path)
-	if err != nil {
-		panic(err)
-	}
-	return log.New(file, "", 0)
-}
-
 type TestReport struct {
 	Target          string
 	Concurrency     int
@@ -75,12 +65,12 @@ func NewTestReport(lode *Lode) TestReport {
 	}
 }
 
-func (t TestReport) StatusHistogram() report2.StatusHistogram {
-	return report2.BuildStatusHistogram(t.ResponseTimings.Responses(), t.ResponseCount)
+func (t TestReport) StatusHistogram() report.StatusHistogram {
+	return report.BuildStatusHistogram(t.ResponseTimings.Responses(), t.ResponseCount)
 }
 
-func (t TestReport) LatencyPercentiles() report2.LatencyPercentiles {
-	return report2.BuildLatencyPercentiles(t.ResponseTimings.Timings())
+func (t TestReport) LatencyPercentiles() report.LatencyPercentiles {
+	return report.BuildLatencyPercentiles(t.ResponseTimings.Timings())
 }
 
 func (t TestReport) FirstResponse() responseTimings.ResponseTiming {
@@ -127,4 +117,16 @@ No requests made...
 		return ""
 	}
 	return builder.String()
+}
+
+func (t TestReport) ToRunData() RunDataV1 {
+	return RunDataV1{
+		Version:         "1",
+		Target:          t.Target,
+		Concurrency:     t.Concurrency,
+		Duration:        t.Duration,
+		ResponseCount:   t.ResponseCount,
+		RequestRate:     t.RequestRate,
+		ResponseTimings: t.ResponseTimings,
+	}
 }
