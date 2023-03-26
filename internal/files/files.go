@@ -24,3 +24,7 @@ func ReaderFromFileOrString(file string, body string) (reader io.Reader) {
 	}
 	return
 }
+
+type Decoder interface {
+	Decode(v interface{}) (err error)
+}

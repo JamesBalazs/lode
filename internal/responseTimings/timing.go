@@ -21,6 +21,18 @@ type Timing struct {
 	Done         time.Time
 }
 
+func (t Timing) StartTime() time.Time {
+	if !t.DnsStart.IsZero() {
+		return t.DnsStart
+	} else if !t.ConnectStart.IsZero() {
+		return t.ConnectStart
+	} else if !t.TlsStart.IsZero() {
+		return t.TlsStart
+	} else {
+		return t.GotConn
+	}
+}
+
 func (t Timing) DnsLookupDuration() time.Duration {
 	return t.DnsDone.Sub(t.DnsStart).Truncate(TimingResolution)
 }
