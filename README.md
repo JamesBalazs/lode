@@ -14,6 +14,7 @@ Versatile load testing CLI tool written in Go, with configurable workflows to fa
 **Features:**
 - Concurrent
 - Timing data for individual requests
+- Store and replay load test results and responses
 - Configurable with workflows for CI/automation use
 - Open source
 
@@ -44,7 +45,7 @@ A summary report is printed at the end.
 | `--fail-fast` |  | Abort the test immediately if a non-success status code is received |
 | `--ignore-failures` |  | Don't return non-zero exit code when non-success status codes are received |
 | `--out` | `-O` | Filepath to write requests and timing data, if provided |
-| `--outFormat` |  | Format to use when writing requests to file - valid options are `json` and `yaml` |
+| `--outFormat` |  | Format to use when writing requests to file - valid options are `json` and `yaml`, defaults to `json` |
 
 One of either `--delay` or `--freq` is required. If both are provided, delay will be calculated from the given frequency.
 
@@ -93,7 +94,7 @@ A breakdown of the request's timing is printed at the end.
 | `--interactive` | `-i` | Use interactive mode, which shows the timing, body, and headers, of the request |
 | `--ignore-failures` |  | Don't return non-zero exit code when non-success status codes are received |
 | `--out` | `-O` | Filepath to write requests and timing data, if provided |
-| `--outFormat` |  | Format to use when writing requests to file - valid options are `json` and `yaml` |
+| `--outFormat` |  | Format to use when writing requests to file - valid options are `json` and `yaml`, defaults to `json` |
 
 **Example:**
 
@@ -159,9 +160,47 @@ tests:
 | `failfast` | Boolean - Abort the test immediately if a non-success status code is received |
 | `ignorefailures` | Boolean - Don't return non-zero exit code when non-success status codes are received |
 
+## Usage
+### `lode replay [flags] [filepath]`
+Used to load the report of a single load test from the specified file.
+
+**Supported flags:**
+| Flag | Shorthand | Usage |
+| --- | --- | --- |
+| `--inFormat` |  | Format of log file - valid options are `json` and `yaml`, defaults to `json` |
+
+**Examples:**
+- `lode replay ./out.json` load the log file out.json and replay the interactive report from that run
+- `lode replay --inFormat yaml ./out.yaml` load the log file out.yaml, as yaml, and replay the interactive report from that run
+
+## Example output
+```
+❯ lode replay ./out.json
+Target: GET http://my.example.service
+Concurrency: 8
+Requests made: 100
+Time taken: 5.04s
+Requests per second (avg): 19.84
+
+Response breakdown:
+200: ===================>  98x
+501: =>                    2x
+
+Percentile latency breakdown:
+50th: 90ms
+66th: 95ms
+75th: 100ms
+80th: 104ms
+90th: 114ms
+95th: 130ms
+98th: 171ms
+99th: 221ms
+100th: 239ms
+
+[interactive report]...
+```
+
 ## Planned Features
-- Log responses to a file
-- Replay logs from file
 - Timing/response code assertions for CI use
 
 ## Releasing
