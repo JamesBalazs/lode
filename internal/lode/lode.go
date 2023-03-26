@@ -162,13 +162,13 @@ func (l *Lode) Report() {
 		}
 
 		runData := report.ToRunData()
-		data, err := marshalFunc(runData)
-
-		file, err := os.Create(l.OutFile)
-		if err != nil {
-			panic(err)
+		if data, err := marshalFunc(runData); err != nil {
+			Logger.Panicf("error marshalling outfile: %s", err.Error())
+		} else if file, err := os.Create(l.OutFile); err != nil {
+			Logger.Panicf("error creating outfile: %s", err.Error())
+		} else if _, err = file.Write(data); err != nil {
+			Logger.Panicf("error writing outfile: %s", err.Error())
 		}
-		file.Write(data)
 	}
 
 	RunReport(report)
@@ -200,13 +200,6 @@ func (l Lode) closeOnSigterm(channel chan responseTimings.ResponseTiming) {
 
 func (l *Lode) setFinishTime() {
 	l.FinishTime = time.Now()
-}
-
-func (l Lode) outMarshaller() func(v interface{}) ([]byte, error) {
-	if l.OutFormat == "yaml" {
-		return yaml.Marshal
-	}
-	return json.Marshal
 }
 
 func (l Lode) makeAndTimeRequest(ctx context.Context) (result *responseTimings.Response, timing *responseTimings.Timing) {
