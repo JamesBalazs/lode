@@ -21,6 +21,7 @@ type Params struct {
 	Headers        []string
 	FailFast       bool
 	IgnoreFailures bool
+	Assert         string
 }
 
 func (p Params) Validate() {
