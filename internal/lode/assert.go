@@ -1,6 +1,7 @@
 package lode
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,7 +12,7 @@ type Assertion interface {
 }
 
 func ParseAssertionArray(list []interface{}) []Assertion {
-	assertions := make([]Assertion, len(list))
+	var assertions []Assertion
 	for _, m := range list {
 		assertion := m.(map[string]interface{})
 		assertions = append(assertions, NewAssertion(assertion))
@@ -20,7 +21,12 @@ func ParseAssertionArray(list []interface{}) []Assertion {
 }
 
 func NewAssertion(m map[string]interface{}) Assertion {
-	switch m["type"].(string) {
+	typ, present := m["type"].(string)
+	if !present {
+		str, _ := json.Marshal(m)
+		panic(fmt.Sprintf("no type provided in assertion: %s", str))
+	}
+	switch typ {
 	case "and":
 		return NewAndAssertion(m)
 	case "or":
