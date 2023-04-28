@@ -22,7 +22,9 @@ const testAssertion = `{"type": "and", "assertions": [
 		{"type": "equals", "property": "body", "equals": "this"},
 		{"type": "contains", "property": "body", "contains": "that"}
 	]},
-	{"type": "matches", "property": "status", "regexp": "2\\d\\d"}
+	{"type": "matches", "property": "status", "regexp": "2\\d\\d"},
+	{"type": "greaterThan", "property": "headers", "key": "X-Custom", "greaterThan": 199},
+	{"type": "lessThan", "property": "headers", "key": "X-Custom", "lessThan": "500"}
 ]}`
 
 func TestNewAssertion(t *testing.T) {
@@ -39,6 +41,8 @@ func TestNewAssertion(t *testing.T) {
 				ContainsAssertion{propertyName: "body", contains: "that"},
 			}},
 			MatchesAssertion{propertyName: "status", expression: regexp.MustCompile("2\\d\\d")},
+			GreaterThanAssertion{propertyName: "headers", subPropertyName: "X-Custom", greaterThan: 199},
+			LessThanAssertion{propertyName: "headers", subPropertyName: "X-Custom", lessThan: 500},
 		},
 	}, assertion)
 }
@@ -550,6 +554,261 @@ func TestMatchesAssertion_assertUnknownProperty(t *testing.T) {
 	assertion := MatchesAssertion{
 		propertyName: "unknown",
 		expression:   regexp.MustCompile("2\\d\\d"),
+	}
+
+	assert.Panics(t, func() {
+		assertion.assert(lode)
+	})
+}
+
+func TestNewGreaterThanAssertion(t *testing.T) {
+	assertion := map[string]interface{}{
+		"type":        "greaterThan",
+		"property":    "headers",
+		"key":         "Header-Name",
+		"greaterThan": 200,
+	}
+
+	result := NewGreaterThanAssertion(assertion)
+
+	assert.Equal(t, GreaterThanAssertion{
+		propertyName:    "headers",
+		subPropertyName: "Header-Name",
+		greaterThan:     200,
+	}, result)
+}
+
+func TestGreaterThanAssertion_assertBody(t *testing.T) {
+	lode := &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "200"}},
+			{Response: &responseTimings.Response{Body: "201"}},
+		},
+	}
+
+	assertion := GreaterThanAssertion{
+		propertyName: "body",
+		greaterThan:  200,
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "abc"}},
+			{Response: &responseTimings.Response{Body: "201"}},
+		},
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "201"}},
+			{Response: &responseTimings.Response{Body: "201"}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
+}
+
+func TestGreaterThanAssertion_assertHeaders(t *testing.T) {
+	lode := &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{}}}},
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"200"}}}}},
+		},
+	}
+
+	assertion := GreaterThanAssertion{
+		propertyName:    "headers",
+		subPropertyName: "Header-Name",
+		greaterThan:     200,
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"201"}}}}},
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"201"}}}}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
+
+	assertion = GreaterThanAssertion{
+		propertyName: "headers",
+		greaterThan:  201,
+	}
+
+	assert.Panics(t, func() {
+		assertion.assert(lode)
+	})
+}
+
+func TestGreaterThanAssertion_assertStatus(t *testing.T) {
+	lode := &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{StatusCode: 200}},
+			{Response: &responseTimings.Response{StatusCode: 201}},
+		},
+	}
+
+	assertion := GreaterThanAssertion{
+		propertyName: "status",
+		greaterThan:  200,
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{StatusCode: 201}},
+			{Response: &responseTimings.Response{StatusCode: 201}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
+}
+
+func TestGreaterThanAssertion_assertUnknownProperty(t *testing.T) {
+	lode := &Lode{}
+	assertion := GreaterThanAssertion{
+		propertyName: "unknown",
+		greaterThan:  200,
+	}
+
+	assert.Panics(t, func() {
+		assertion.assert(lode)
+	})
+}
+
+func TestNewLessThanAssertion(t *testing.T) {
+	assertion := map[string]interface{}{
+		"type":     "greaterThan",
+		"property": "headers",
+		"key":      "Header-Name",
+		"lessThan": 300,
+	}
+
+	result := NewLessThanAssertion(assertion)
+
+	assert.Equal(t, LessThanAssertion{
+		propertyName:    "headers",
+		subPropertyName: "Header-Name",
+		lessThan:        300,
+	}, result)
+}
+
+func TestLessThanAssertion_assertBody(t *testing.T) {
+	lode := &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "301"}},
+			{Response: &responseTimings.Response{Body: "204"}},
+		},
+	}
+
+	assertion := LessThanAssertion{
+		propertyName: "body",
+		lessThan:     300,
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "abc"}},
+			{Response: &responseTimings.Response{Body: "204"}},
+		},
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "299"}},
+			{Response: &responseTimings.Response{Body: "200"}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
+}
+
+func TestLessThanAssertion_assertHeaders(t *testing.T) {
+	lode := &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{}}}},
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"123"}}}}},
+		},
+	}
+
+	assertion := LessThanAssertion{
+		propertyName:    "headers",
+		subPropertyName: "Header-Name",
+		lessThan:        124,
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"123"}}}}},
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"abc"}}}}},
+		},
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"123"}}}}},
+			{Response: &responseTimings.Response{Header: responseTimings.Header{HttpHeader: http.Header{"Header-Name": []string{"101"}}}}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
+
+	assertion = LessThanAssertion{
+		propertyName: "headers",
+		lessThan:     123,
+	}
+
+	assert.Panics(t, func() {
+		assertion.assert(lode)
+	})
+}
+
+func TestLessThanAssertion_assertStatus(t *testing.T) {
+	lode := &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{StatusCode: 200}},
+			{Response: &responseTimings.Response{StatusCode: 201}},
+		},
+	}
+
+	assertion := LessThanAssertion{
+		propertyName: "status",
+		lessThan:     201,
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{StatusCode: 200}},
+			{Response: &responseTimings.Response{StatusCode: 100}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
+}
+
+func TestLessThanAssertion_assertUnknownProperty(t *testing.T) {
+	lode := &Lode{}
+	assertion := LessThanAssertion{
+		propertyName: "unknown",
+		lessThan:     123,
 	}
 
 	assert.Panics(t, func() {

@@ -3,7 +3,9 @@ package lode
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/cast"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -37,6 +39,10 @@ func NewAssertion(m map[string]interface{}) Assertion {
 		return NewContainsAssertion(m)
 	case "matches":
 		return NewMatchesAssertion(m)
+	case "greaterThan":
+		return NewGreaterThanAssertion(m)
+	case "lessThan":
+		return NewLessThanAssertion(m)
 	default:
 		panic("unknown assertion type")
 	}
@@ -198,5 +204,100 @@ func (a MatchesAssertion) assert(lode *Lode) bool {
 	return result
 }
 
-func a() {
+func NewGreaterThanAssertion(m map[string]interface{}) GreaterThanAssertion {
+	propertyName := m["property"].(string)
+	subPropertyName, _ := m["key"].(string)
+	greaterThan := cast.ToFloat64(m["greaterThan"]) // TODO switch to ToFloat64E and handle
+	return GreaterThanAssertion{propertyName: propertyName, subPropertyName: subPropertyName, greaterThan: greaterThan}
+}
+
+type GreaterThanAssertion struct {
+	propertyName    string
+	subPropertyName string
+	greaterThan     float64
+}
+
+func (a GreaterThanAssertion) assert(lode *Lode) bool {
+	result := true
+
+	switch a.propertyName {
+	case "body":
+		for _, response := range lode.ResponseTimings {
+			if bodyF, err := strconv.ParseFloat(response.Response.Body, 64); err != nil {
+				result = false
+			} else {
+				result = result && bodyF > a.greaterThan
+			}
+		}
+	case "headers":
+		if len(a.subPropertyName) == 0 {
+			panic("no header key provided")
+		}
+
+		for _, response := range lode.ResponseTimings {
+			header := response.Response.Header.HttpHeader.Get(a.subPropertyName)
+			if headerF, err := strconv.ParseFloat(header, 64); err != nil {
+				result = false
+			} else {
+				result = result && headerF > a.greaterThan
+			}
+		}
+	case "status":
+		for _, response := range lode.ResponseTimings {
+			result = result && float64(response.Response.StatusCode) > a.greaterThan
+		}
+	default:
+		panic("unknown property in assertion")
+	}
+
+	return result
+}
+
+func NewLessThanAssertion(m map[string]interface{}) LessThanAssertion {
+	propertyName := m["property"].(string)
+	subPropertyName, _ := m["key"].(string)
+	lessThan := cast.ToFloat64(m["lessThan"]) // TODO switch to ToFloat64E and handle
+	return LessThanAssertion{propertyName: propertyName, subPropertyName: subPropertyName, lessThan: lessThan}
+}
+
+type LessThanAssertion struct {
+	propertyName    string
+	subPropertyName string
+	lessThan        float64
+}
+
+func (a LessThanAssertion) assert(lode *Lode) bool {
+	result := true
+
+	switch a.propertyName {
+	case "body":
+		for _, response := range lode.ResponseTimings {
+			if bodyF, err := strconv.ParseFloat(response.Response.Body, 64); err != nil {
+				result = false
+			} else {
+				result = result && bodyF < a.lessThan
+			}
+		}
+	case "headers":
+		if len(a.subPropertyName) == 0 {
+			panic("no header key provided")
+		}
+
+		for _, response := range lode.ResponseTimings {
+			header := response.Response.Header.HttpHeader.Get(a.subPropertyName)
+			if headerF, err := strconv.ParseFloat(header, 64); err != nil {
+				result = false
+			} else {
+				result = result && headerF < a.lessThan
+			}
+		}
+	case "status":
+		for _, response := range lode.ResponseTimings {
+			result = result && float64(response.Response.StatusCode) < a.lessThan
+		}
+	default:
+		panic("unknown property in assertion")
+	}
+
+	return result
 }
