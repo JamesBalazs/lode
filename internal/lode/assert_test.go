@@ -24,7 +24,9 @@ const testAssertion = `{"type": "and", "assertions": [
 	]},
 	{"type": "matches", "property": "status", "regexp": "2\\d\\d"},
 	{"type": "greaterThan", "property": "headers", "key": "X-Custom", "greaterThan": 199},
-	{"type": "lessThan", "property": "headers", "key": "X-Custom", "lessThan": "500"}
+	{"type": "not", "assertion": {
+		"type": "lessThan", "property": "headers", "key": "X-Custom", "lessThan": "500"}
+	}
 ]}`
 
 func TestNewAssertion(t *testing.T) {
@@ -42,7 +44,7 @@ func TestNewAssertion(t *testing.T) {
 			}},
 			MatchesAssertion{propertyName: "status", expression: regexp.MustCompile("2\\d\\d")},
 			GreaterThanAssertion{propertyName: "headers", subPropertyName: "X-Custom", greaterThan: 199},
-			LessThanAssertion{propertyName: "headers", subPropertyName: "X-Custom", lessThan: 500},
+			NotAssertion{assertion: LessThanAssertion{propertyName: "headers", subPropertyName: "X-Custom", lessThan: 500}},
 		},
 	}, assertion)
 }
@@ -814,4 +816,60 @@ func TestLessThanAssertion_assertUnknownProperty(t *testing.T) {
 	assert.Panics(t, func() {
 		assertion.assert(lode)
 	})
+}
+
+func TestNewNotAssertion(t *testing.T) {
+	assertion := map[string]interface{}{
+		"type": "not",
+		"assertion": map[string]interface{}{
+			"type":     "equals",
+			"property": "body",
+			"equals":   "this",
+		},
+	}
+
+	result := NewNotAssertion(assertion)
+
+	assert.Equal(t, NotAssertion{
+		assertion: EqualsAssertion{
+			propertyName: "body",
+			equals:       "this",
+		},
+	}, result)
+}
+
+func TestNotAssertion_assert(t *testing.T) {
+	lode := &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "this"}},
+			{Response: &responseTimings.Response{Body: "this"}},
+		},
+	}
+
+	assertion := NotAssertion{
+		assertion: EqualsAssertion{
+			propertyName: "body",
+			equals:       "this",
+		},
+	}
+
+	assert.False(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "this"}},
+			{Response: &responseTimings.Response{Body: "that"}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
+
+	lode = &Lode{
+		ResponseTimings: []responseTimings.ResponseTiming{
+			{Response: &responseTimings.Response{Body: "that"}},
+			{Response: &responseTimings.Response{Body: "that"}},
+		},
+	}
+
+	assert.True(t, assertion.assert(lode))
 }

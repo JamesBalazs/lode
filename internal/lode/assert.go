@@ -43,6 +43,8 @@ func NewAssertion(m map[string]interface{}) Assertion {
 		return NewGreaterThanAssertion(m)
 	case "lessThan":
 		return NewLessThanAssertion(m)
+	case "not":
+		return NewNotAssertion(m)
 	default:
 		panic("unknown assertion type")
 	}
@@ -300,4 +302,17 @@ func (a LessThanAssertion) assert(lode *Lode) bool {
 	}
 
 	return result
+}
+
+func NewNotAssertion(m map[string]interface{}) NotAssertion {
+	assertion := m["assertion"].(map[string]interface{})
+	return NotAssertion{assertion: NewAssertion(assertion)}
+}
+
+type NotAssertion struct {
+	assertion Assertion
+}
+
+func (a NotAssertion) assert(lode *Lode) bool {
+	return !a.assertion.assert(lode)
 }
